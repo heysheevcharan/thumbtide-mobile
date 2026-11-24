@@ -1,0 +1,38 @@
+# Odd Word Out: everyone gets the same secret word except one player. Describe it, then vote out the odd one.
+# Syntax and every setting: web/src/games/kit/pad.ts
+# The phone screen is the game's own (controller.ts); these entries give the help sheet, the haptics and the pace.
+
+controller
+  orientation  portrait
+
+button word
+  label        "Your word"
+  hint         "Hold the card to see your secret word. One player has a different word, or none."
+  haptic       12ms
+
+button done
+  label        "Done"
+  hint         "Words: say one adjective for your word. Jobs: say something that happens in that job. Then tap Done."
+  style        primary
+  haptic       18ms
+
+choices vote                 # who to put out
+  hint         "Tap the player you think has the odd word, then confirm."
+  haptic       12ms
+
+button next
+  label        "Next round"
+  hint         "The host can skip the rest of the reveal."
+  style        secondary
+  haptic       12ms
+
+buzz                         # ms on, off, on…
+  round        40 60 40      # a new word
+  vote         25            # voting is open
+  caught       30 40 30 40 120
+  escaped      300
+
+tune                         # the game's pace, in ms
+  reveal-time  14000         # the reveal stays up, then the next round starts
+  bot-min      2500          # computer players press Done and vote after a wait in this range
+  bot-max      6000

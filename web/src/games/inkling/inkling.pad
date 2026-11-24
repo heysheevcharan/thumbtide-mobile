@@ -1,0 +1,31 @@
+# Inkling: draw a secret word on your phone while everyone else guesses it.
+# Syntax and every setting: web/src/games/kit/pad.ts
+# The phone screen is the game's own (controller.ts); these entries give the help sheet and the haptics.
+
+controller
+  orientation  portrait
+
+button pick
+  label        "Pick a word"
+  hint         "Your turn: tap one of three words, then confirm. Harder words score more."
+  style        primary
+  haptic       14ms
+
+button draw
+  label        "Draw"
+  hint         "Draw with a finger; the TV shows it as you go. Undo takes back a line, Clear needs two taps."
+  style        primary
+  haptic       0ms
+
+button guess
+  label        "Guess"
+  hint         "Type what you think it is. Faster is worth more. You see when you're close."
+  style        primary
+  haptic       10ms
+
+buzz                         # ms on, off, on…
+  turn         40 60 40      # your turn to draw
+  got          30 40 90      # you guessed it
+  close        20            # nearly
+  drawn        25            # someone guessed your drawing
+  end          60 50 120

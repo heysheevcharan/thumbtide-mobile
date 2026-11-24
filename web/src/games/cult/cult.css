@@ -1,0 +1,444 @@
+/* Cult. The art is a two-colour screen print (`pnpm art cult`, set as --art-* variables); the interface around it
+   stays conventional: Inter for everything people read, a heavy serif (.inked, kit.css) for a few big moments.
+   TV (.cf) and phone (.cp).
+   The TV sticks to CSS that LG's webOS 22 browser (Chromium 87) knows: no aspect-ratio, color-mix() or :has(). */
+
+.cf, .cp {
+  --bone: #f3e9d2; --ink: #0b0b12; --town: #3ec5ff; --brass: #e0b062; --cult: #ff4466; --violet: #5b2bd6;
+  --bone-dim: rgba(243, 233, 210, 0.6); --bone-faint: rgba(243, 233, 210, 0.14);
+  /* Inter for everything people read; the serif (.inked) only for a few big moments */
+  --font: "Inter", system-ui, sans-serif; --font-display: "Inter", system-ui, sans-serif; --muted: #9a95a8;
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.cf-art, .cp-pic { display: block; background-position: center; background-size: cover; background-repeat: no-repeat; }
+
+/* ================================================================== TV */
+.cf {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0; overflow: hidden; color: var(--bone); font-family: var(--font);
+  display: flex; flex-direction: column; padding: 2.6vh 3.4vw 2.8vh; background: var(--ink);
+}
+/* the town at night behind everything, dimmed so the table reads on top (slightly oversized to lose the print's edge) */
+.cf-bg {
+  position: absolute; top: -3%; right: -3%; bottom: -3%; left: -3%; z-index: 0;
+  background: var(--art-backdrop) center 78% / cover no-repeat; filter: brightness(0.6);
+}
+.cf-bg::after {
+  content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+  background: linear-gradient(180deg, rgba(11, 11, 18, 0.94) 0%, rgba(11, 11, 18, 0.7) 40%, rgba(11, 11, 18, 0.2) 66%, rgba(11, 11, 18, 0.88) 100%);
+}
+.cf-grain { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 9; pointer-events: none; background-image: var(--grain); opacity: 0.06; }
+.cf-top, .cf-boards, .cf-status, .cf-seats { position: relative; z-index: 1; }
+
+.cf-top { display: flex; align-items: center; justify-content: space-between; }
+.cf-sign .inked { font-size: 5.8vh; }
+.cf-meta { display: flex; align-items: center; gap: 3vw; color: var(--bone-dim); font: 700 2.2vh/1 var(--font-display); }
+.cf-unrest { display: flex; align-items: center; gap: 1.1vh; }
+.cf-unrest span { margin-right: 0.6vh; text-transform: uppercase; letter-spacing: 0.16em; font-size: 1.8vh; }
+.cf-unrest i { width: 2.5vh; height: 2.5vh; border-radius: 50%; border: 0.3vh solid rgba(243, 233, 210, 0.3); transition: background 300ms, border-color 300ms; }
+.cf-unrest i.on { background: var(--brass); border-color: var(--brass); box-shadow: 0.25vh 0.2vh 0 var(--cult); }
+.cf-unrest.hot i.on { background: var(--cult); border-color: var(--cult); box-shadow: 0.25vh 0.2vh 0 var(--bone); animation: cf-throb 1s ease-in-out infinite; }
+@keyframes cf-throb { 50% { transform: scale(1.25); } }
+.cf-deck { display: flex; align-items: center; gap: 1vh; }
+.cf-deck-card { width: 3.6vh; height: 5.4vh; border-radius: 0.4vh; box-shadow: 0 0 0 0.2vh rgba(243, 233, 210, 0.3); }
+.cf-deck b { color: var(--bone); font-size: 2.9vh; }
+
+/* the boards */
+.cf-boards { margin-top: 1.6vh; display: flex; flex-direction: column; align-items: center; gap: 1.4vh; }
+.cf-board {
+  position: relative; overflow: hidden; display: flex; align-items: center; gap: 2.6vh; padding: 1.4vh 2.4vh 1.4vh 2.8vh;
+  border-radius: 1.2vh; background: rgba(11, 11, 18, 0.78);
+  box-shadow: 0 0 0 0.3vh var(--bone-faint), 0 1.6vh 4vh rgba(0, 0, 0, 0.55);
+}
+/* halftone dots in the team's ink, fading out across the board */
+.cf-board::before {
+  content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; pointer-events: none;
+  background-image: radial-gradient(circle, var(--dot) 0.14vh, transparent 0.24vh); background-size: 0.95vh 0.95vh;
+  -webkit-mask-image: linear-gradient(90deg, #000, transparent 55%); mask-image: linear-gradient(90deg, #000, transparent 55%);
+}
+.cf-board.town { --dot: rgba(62, 197, 255, 0.55); }
+.cf-board.cult { --dot: rgba(255, 68, 102, 0.55); }
+.cf-board h3 { position: relative; width: 16vh; margin: 0; }
+.cf-board h3 .inked { font-size: 5.2vh; }
+.cf-slots { position: relative; display: flex; gap: 1.4vh; }
+.cf-slot {
+  position: relative; width: 12.4vh; height: 18.6vh; border-radius: 1.1vh; border: 0.25vh dashed rgba(243, 233, 210, 0.2);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.7vh; text-align: center;
+}
+.cf-slot.filled { border-color: transparent; }
+.cf-card { position: absolute; top: -0.25vh; right: -0.25vh; bottom: -0.25vh; left: -0.25vh; border-radius: 1.1vh; box-shadow: 0 0.9vh 2vh rgba(0, 0, 0, 0.65); }
+.cf-slot.slam .cf-card { animation: cf-slam 650ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+@keyframes cf-slam {
+  0% { transform: translateY(-30vh) rotate(-14deg) scale(1.6); opacity: 0; }
+  60% { transform: translateY(0) rotate(2deg) scale(0.94); opacity: 1; }
+  100% { transform: none; }
+}
+.cf-power { width: 9.2vh; height: 9.2vh; border-radius: 50%; background-size: 128%; opacity: 0.55; box-shadow: 0 0 0 0.2vh rgba(243, 233, 210, 0.2); }
+.cf-slot small { font: 700 1.45vh/1.1 var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; color: var(--bone-dim); padding: 0 0.5vh; }
+.cf-win svg { width: 5.6vh; height: 5.6vh; display: block; }
+.cf-board.town .cf-win { color: var(--brass); opacity: 0.55; }
+.cf-board.cult .cf-win { color: var(--cult); opacity: 0.6; }
+.cf-note { margin: 0.2vh 0 0; min-height: 2.8vh; color: var(--bone-dim); font: 600 2.3vh/1.2 var(--font-display); text-shadow: 0 0.2vh 0.8vh #000; }
+
+/* what's happening */
+.cf-status {
+  margin: auto 0; padding: 0 6vw; text-align: center; font: 600 4.2vh/1.3 var(--font); letter-spacing: -0.01em; color: var(--bone);
+  text-shadow: 0 0.3vh 1.4vh rgba(0, 0, 0, 0.95); transition: opacity 200ms;
+}
+.cf-who { color: var(--c); }
+.cf-count {
+  display: inline-block; margin-left: 1vh; padding: 0.3vh 1.2vh; border-radius: 2vh; vertical-align: 0.2vh;
+  background: rgba(243, 233, 210, 0.12); font-size: 0.75em;
+}
+.cf.cf-banner-on .cf-status, .cf.cf-banner-on .cf-note { opacity: 0; }
+
+/* the seats */
+.cf-seats { margin: 0; padding: 0; list-style: none; display: flex; justify-content: center; gap: 1vw; }
+.cf-seat {
+  position: relative; flex: 1 1 0; min-width: 0; max-width: 11.5vw; padding: 2vh 0.6vw 1.7vh; border-radius: 1.4vh; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; gap: 1vh;
+  background: rgba(11, 11, 18, 0.82); box-shadow: 0 0 0 0.25vh var(--bone-faint), 0 1vh 2.4vh rgba(0, 0, 0, 0.5);
+  transition: opacity 300ms, transform 300ms, box-shadow 300ms;
+}
+.cf-face {
+  position: relative; width: 8.6vh; height: 8.6vh; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--c); color: var(--ink); font: 800 3.7vh/1 var(--font);
+  box-shadow: 0.45vh 0.4vh 0 var(--violet);
+}
+.cf-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 2.6vh/1.2 var(--font); }
+.cf-tag, .cf-role {
+  padding: 0.45vh 1.2vh; border-radius: 0.7vh; font: 800 1.7vh/1.2 var(--font-display); text-transform: uppercase; letter-spacing: 0.1em;
+  background: rgba(243, 233, 210, 0.1); color: var(--bone-dim);
+}
+.cf-tag.mayor { background: var(--brass); color: var(--ink); }
+.cf-tag.sheriff { background: var(--bone); color: var(--ink); }
+.cf-badge {
+  position: absolute; top: -3.4vh; right: -1.2vh; z-index: 2; width: 7.8vh; height: 7.8vh; border-radius: 50%; background-size: 130%;
+  transform: rotate(10deg); box-shadow: 0 0 0 0.3vh var(--bone), 0.5vh 0.6vh 0 var(--violet), 0 1vh 2vh rgba(0, 0, 0, 0.6);
+  animation: cf-pin 420ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+@keyframes cf-pin { from { transform: rotate(-30deg) scale(0.2); opacity: 0; } }
+.cf-seat.mayor { box-shadow: 0 0 0 0.35vh var(--brass), 0 1vh 2.4vh rgba(0, 0, 0, 0.5); transform: translateY(-1vh); }
+.cf-seat.sheriff { box-shadow: 0 0 0 0.35vh var(--bone), 0 1vh 2.4vh rgba(0, 0, 0, 0.5); transform: translateY(-1vh); }
+.cf-seat.voted .cf-face::after {
+  content: "✓"; position: absolute; right: -0.9vh; top: -0.9vh; width: 3.3vh; height: 3.3vh; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; background: var(--bone); color: var(--ink); font: 800 2.1vh/1 var(--font);
+}
+.cf-seat.benched { opacity: 0.4; }
+.cf-seat.dead { opacity: 0.35; }
+.cf-seat.dead .cf-face { filter: grayscale(1); }
+.cf-seat.dead .cf-name { text-decoration: line-through; }
+.cf-seat.away .cf-face { filter: grayscale(0.8) brightness(0.7); }
+.cf-seat.target { box-shadow: 0 0 0 0.35vh var(--cult), 0 1vh 2.4vh rgba(0, 0, 0, 0.5); }
+.cf-seat.target.burn .cf-face { animation: cf-burn 0.35s ease-in-out infinite alternate; }
+@keyframes cf-burn {
+  from { box-shadow: 0 0 1.5vh 0.5vh #ff9f43, 0 0 4vh 1.5vh rgba(255, 68, 102, 0.8); }
+  to { box-shadow: 0 0 2.5vh 1vh #ffd23f, 0 0 6vh 2.5vh rgba(255, 68, 102, 0.9); }
+}
+/* votes land like rubber stamps */
+.cf-vote {
+  position: absolute; top: -2.6vh; left: -0.8vh; z-index: 3; padding: 0.7vh 1.4vh; border: 0.35vh solid currentColor; border-radius: 0.8vh;
+  font: 800 2.4vh/1 var(--font); letter-spacing: 0.08em; text-transform: uppercase; background: rgba(11, 11, 18, 0.92); transform: rotate(-8deg);
+  animation: cf-stamp 380ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.cf-vote.yes { color: #7cf29a; }
+.cf-vote.no { color: var(--cult); }
+.cf-seat:nth-child(2) .cf-vote { animation-delay: 60ms; }
+.cf-seat:nth-child(3) .cf-vote { animation-delay: 120ms; }
+.cf-seat:nth-child(4) .cf-vote { animation-delay: 180ms; }
+.cf-seat:nth-child(5) .cf-vote { animation-delay: 240ms; }
+.cf-seat:nth-child(6) .cf-vote { animation-delay: 300ms; }
+.cf-seat:nth-child(7) .cf-vote { animation-delay: 360ms; }
+.cf-seat:nth-child(8) .cf-vote { animation-delay: 420ms; }
+@keyframes cf-stamp { from { transform: rotate(-8deg) scale(2.4); opacity: 0; } }
+.cf-seat.role-town .cf-role { background: var(--town); color: var(--ink); }
+.cf-seat.role-cult .cf-role { background: var(--cult); color: var(--ink); }
+.cf-seat.role-prophet .cf-role { background: var(--violet); color: var(--bone); }
+.cf[data-phase="end"] .cf-seat { opacity: 1; }
+.cf[data-phase="end"] .cf-seat.dead { opacity: 0.6; }
+
+/* big moments: poster lettering in the open middle, under the boards */
+.cf-banner {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 5; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; gap: 3vh; padding-top: 30vh;
+}
+.cf-banner-text { display: flex; flex-direction: column; align-items: center; gap: 1.2vh; }
+.cf-banner .inked { font-size: 10.5vh; white-space: normal; text-align: center; max-width: 64vw; }
+.cf-banner small { font: 700 3.6vh/1.2 var(--font-display); color: var(--bone); text-shadow: 0 0.3vh 1.2vh #000; }
+.cf-banner-art {
+  width: 20vh; height: 20vh; border-radius: 50%; background-size: 128%; flex: none;
+  box-shadow: 0 0 0 0.45vh var(--bone), 0.8vh 0.8vh 0 var(--violet), 0 2vh 5vh rgba(0, 0, 0, 0.7);
+}
+.cf-banner.show .inked, .cf-banner.show .cf-banner-art { animation: cf-pop 520ms cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+.cf-banner.show .cf-banner-art { animation-delay: 60ms; }
+@keyframes cf-pop { from { transform: scale(0.3) rotate(-6deg); opacity: 0; } }
+
+/* dealing roles: one card back per seat, fanned; a card lifts when its player is ready */
+.cf-intro {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 4; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 1.8vh; padding-bottom: 8vh; text-align: center;
+  background: radial-gradient(ellipse at 50% 42%, rgba(11, 11, 18, 0.55), rgba(11, 11, 18, 0.96) 72%);
+}
+.cf-fan { position: relative; width: 80vh; height: 31vh; margin-bottom: 1vh; }
+.cf-back {
+  position: absolute; left: 50%; bottom: 0; width: 16vh; height: 24vh; margin-left: -8vh; border-radius: 1.2vh;
+  background-size: cover; background-position: center; transform-origin: 50% 140%; transform: rotate(var(--r));
+  box-shadow: 0 0 0 0.3vh var(--c), 0 1.2vh 2.6vh rgba(0, 0, 0, 0.7);
+  transition: transform 450ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.cf-back.up { transform: rotate(var(--r)) translateY(-3.4vh); }
+.cf-intro h1 { margin: 0; }
+.cf-intro h1 .inked { font-size: 15vh; }
+.cf-intro p { margin: 0; font: 600 3.6vh/1.3 var(--font-display); color: var(--bone); }
+.cf-intro .cf-count { margin: 0; font-size: 2.8vh; color: var(--bone-dim); }
+
+/* the end: the winning side's poster, roles turned over on the seats below */
+.cf-end { position: absolute; top: 0; right: 0; bottom: 23vh; left: 0; z-index: 4; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.cf-end-art { position: absolute; top: -2%; right: -2%; bottom: 0; left: -2%; background-position: center 62%; animation: cf-fade 900ms ease both; }
+.cf-end-art::after {
+  content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+  background: linear-gradient(180deg, rgba(11, 11, 18, 0.95) 0%, rgba(11, 11, 18, 0.35) 34%, rgba(11, 11, 18, 0) 60%, var(--ink) 100%);
+}
+@keyframes cf-fade { from { opacity: 0; transform: scale(1.06); } }
+.cf-end-text { position: relative; padding-top: 4vh; }
+.cf-end-text h1 { margin: 0; animation: cf-pop 650ms 200ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.cf-end-text h1 .inked { font-size: 11.5vh; }
+.cf-end-text p { margin: 1.4vh 0 0; font: 600 3.6vh/1.2 var(--font-display); color: var(--bone); text-shadow: 0 0.3vh 1.2vh #000; }
+.cf-end-text .cf-next { font-size: 2.6vh; color: var(--bone-dim); }
+.cf-end-text .cf-next b { color: var(--bone); }
+
+/* ================================================================== motion: once, when something happens */
+.cf-pin, .cf-tagbox, .cf-stamp { display: contents; }
+/* the line under the boards rises in when the moment changes */
+.cf-status.swap { animation: cf-rise 420ms cubic-bezier(0.2, 0.9, 0.3, 1) backwards; }
+@keyframes cf-rise { from { opacity: 0; transform: translateY(1.8vh); } }
+/* banners ease out instead of vanishing */
+.cf-banner.out .cf-banner-text, .cf-banner.out .cf-banner-art { animation: cf-out 260ms ease-in forwards; }
+@keyframes cf-out { to { opacity: 0; transform: scale(0.9); } }
+/* a law lands with a thud */
+.cf-board.thud { animation: cf-thud 420ms 330ms ease-out; }
+@keyframes cf-thud { 30% { transform: translateY(0.7vh); } 65% { transform: translateY(-0.2vh); } }
+.cf-unrest i.on { animation: cf-dot 420ms cubic-bezier(0.2, 1.6, 0.4, 1); }
+.cf-unrest.hot i.on { animation: cf-throb 1s ease-in-out infinite; }
+@keyframes cf-dot { from { transform: scale(0.2); } }
+.cf-seat.voted .cf-face::after { animation: cf-dot 360ms cubic-bezier(0.2, 1.6, 0.4, 1); }
+/* roles: the cards are dealt into the fan */
+.cf-back { animation: cf-deal 640ms calc(var(--i) * 90ms) cubic-bezier(0.2, 1, 0.3, 1) backwards; }
+@keyframes cf-deal { from { opacity: 0; transform: translate(60vh, -50vh) rotate(70deg); } }
+/* the end: every role flips over, one seat after another */
+.cf[data-phase="end"] .cf-role { display: inline-block; animation: cf-flip 520ms calc(700ms + var(--i) * 150ms) cubic-bezier(0.2, 1.4, 0.4, 1) backwards; }
+@keyframes cf-flip { from { opacity: 0; transform: perspective(40vh) rotateX(90deg); } }
+
+.cf-count:empty { display: none; }
+
+/* ================================================================== phone (.cp)
+   Your role card face down in the middle (hold to turn it over) and a panel at the bottom: what's happening, and
+   when it's your move, a choice and a button to confirm it. */
+.cp {
+  position: relative; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px;
+  padding: 12px 16px max(16px, env(safe-area-inset-bottom)); color: var(--bone); font-family: var(--font);
+  background: radial-gradient(130% 55% at 50% 0%, rgba(91, 43, 214, 0.16), transparent 70%), var(--ink);
+  -webkit-user-select: none; user-select: none;
+}
+.cp-head { flex: none; display: flex; align-items: center; gap: 8px; height: 28px; }
+.cp-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--muted)); }
+.cp-name { font: 600 15px/1 var(--font); }
+.cp-chip { margin-left: auto; padding: 6px 10px; border-radius: 999px; font: 700 12px/1 var(--font); letter-spacing: 0.02em; }
+.cp-chip:empty { display: none; }
+.cp-chip[data-kind="mayor"] { background: var(--brass); color: var(--ink); }
+.cp-chip[data-kind="sheriff"] { background: var(--bone); color: var(--ink); }
+.cp-chip[data-kind="dead"] { background: rgba(255, 68, 102, 0.16); color: var(--cult); }
+
+/* the card */
+.cp-stage { flex: 1; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center; gap: 12px; }
+.cp-card { position: relative; height: 100%; max-height: 440px; aspect-ratio: 2 / 3; perspective: 1200px; touch-action: none; }
+.cp-card-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 460ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.cp-card.open .cp-card-in { transform: rotateY(180deg); }
+.cp-face {
+  position: absolute; inset: 0; border-radius: 18px; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  box-shadow: 0 0 0 1px rgba(243, 233, 210, 0.14), 0 24px 50px rgba(0, 0, 0, 0.6);
+}
+.cp-back { background: var(--art-card-back) center / cover no-repeat; }
+.cp-front { transform: rotateY(180deg); background: #15141c; }
+.cp-front-art { position: absolute; inset: 0; background: center 12% / cover no-repeat; }
+.cp-front-text {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 70px 16px 18px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: linear-gradient(180deg, transparent, rgba(11, 11, 18, 0.88) 36%, rgba(11, 11, 18, 0.97));
+}
+.cp-front-text small { font: 700 11px/1 var(--font); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.cp-front-text h3 { margin: 0; }
+.cp-front-text h3 .inked { font-size: 32px; }
+.cp-front-text p { margin: 0; font: 500 13px/1.4 var(--font); }
+.cp-front-text .cp-allies { margin-top: 2px; color: var(--muted); font-size: 12px; }
+.cp-hint { margin: 0; font: 500 13px/1 var(--font); color: var(--muted); transition: opacity 200ms; }
+.cp-card.open + .cp-hint, .cp:not(.has-role) .cp-hint { opacity: 0; }
+.cp.burned .cp-back { filter: grayscale(1) brightness(0.45); }
+.cp.burned .cp-card::after {
+  content: "Burned"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-10deg); pointer-events: none;
+  padding: 7px 14px; border: 2px solid var(--cult); border-radius: 8px; background: rgba(11, 11, 18, 0.85);
+  color: var(--cult); font: 800 16px/1 var(--font); letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+/* the panel */
+.cp-panel {
+  flex: none; max-height: 70%; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; touch-action: pan-y;
+  padding: 18px 16px 16px; border-radius: 22px; background: #15141c;
+  box-shadow: 0 0 0 1px rgba(243, 233, 210, 0.07), 0 -12px 32px rgba(0, 0, 0, 0.4);
+}
+.cp.tall .cp-stage { display: none; }
+.cp.tall .cp-panel { flex: 1; max-height: none; display: flex; flex-direction: column; }
+.cp.tall .cp-list { flex: 1; min-height: 0; overflow-y: auto; }
+.cp-title { display: flex; align-items: center; gap: 12px; }
+.cp-ico { flex: none; width: 44px; height: 44px; border-radius: 50%; background: center / 130% no-repeat; box-shadow: 0 0 0 1px rgba(243, 233, 210, 0.2); }
+.cp-title h2 { margin: 0; font: 700 21px/1.2 var(--font); letter-spacing: -0.01em; }
+.cp-title p { margin: 3px 0 0; font: 500 15px/1.4 var(--font); color: var(--muted); }
+.cp-who { color: var(--c); font-weight: 700; }
+.cp-note { margin: 12px 0 0; font: 500 13px/1.4 var(--font); color: var(--muted); text-align: center; }
+.cp-note b { color: var(--bone); }
+
+.cp-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.cp-btn {
+  height: 52px; border: 0; border-radius: 14px; font: 700 16px/1 var(--font); color: var(--bone);
+  background: rgba(243, 233, 210, 0.08); transition: transform 90ms, opacity 160ms, background 160ms; touch-action: manipulation;
+}
+.cp-btn.primary { background: var(--bone); color: var(--ink); }
+.cp-btn.danger { background: var(--cult); color: #fff; }
+.cp-btn.ghost { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(243, 233, 210, 0.22); }
+.cp-btn:disabled { opacity: 0.35; }
+.cp-btn.pressed { transform: scale(0.97); }
+
+/* voting */
+.cp-gov { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.cp-tile { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 14px; background: rgba(243, 233, 210, 0.05); }
+.cp-tile i { flex: none; width: 40px; height: 40px; border-radius: 50%; background: center / 130% no-repeat; box-shadow: 0 0 0 1px rgba(243, 233, 210, 0.2); }
+.cp-tile span { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.cp-tile b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 16px/1.2 var(--font); }
+.cp-tile small { font: 600 12px/1 var(--font); color: var(--muted); }
+.cp-vote { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.cp-btn.yes, .cp-btn.no { height: 84px; font-size: 20px; font-weight: 800; background: rgba(243, 233, 210, 0.06); box-shadow: inset 0 0 0 1.5px rgba(243, 233, 210, 0.14); }
+.cp-btn.yes.on { background: #2fbf71; color: #062312; box-shadow: none; }
+.cp-btn.no.on { background: var(--cult); color: #fff; box-shadow: none; }
+.cp-btn.dim { opacity: 0.4; }
+.cp-btn.on { animation: cp-pop 300ms cubic-bezier(0.2, 1.6, 0.4, 1); }
+@keyframes cp-pop { 40% { transform: scale(1.04); } }
+
+/* law cards: tap one, then confirm */
+.cp-laws { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; margin-top: 16px; padding-top: 8px; }
+.cp-law {
+  position: relative; aspect-ratio: 2 / 3; padding: 0; border: 0; border-radius: 12px; background: center / cover no-repeat;
+  box-shadow: 0 0 0 1px rgba(243, 233, 210, 0.12), 0 10px 22px rgba(0, 0, 0, 0.5);
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 180ms, opacity 180ms;
+}
+.cp-law.town { background-image: var(--art-town-law); }
+.cp-law.cult { background-image: var(--art-cult-law); }
+.cp-law span {
+  position: absolute; left: 6px; right: 6px; bottom: 6px; padding: 6px 4px; border-radius: 8px;
+  background: rgba(11, 11, 18, 0.82); color: var(--bone); font: 700 12px/1 var(--font); text-align: center;
+}
+.cp-panel.picking .cp-law:not(.on) { opacity: 0.45; }
+.cp-law.on { transform: translateY(-8px); box-shadow: 0 0 0 3px var(--bone), 0 18px 30px rgba(0, 0, 0, 0.6); }
+.cp-laws.discard .cp-law.on { box-shadow: 0 0 0 3px var(--cult), 0 18px 30px rgba(0, 0, 0, 0.6); }
+.cp-law.on::after {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%); padding: 5px 8px; border-radius: 6px;
+  font: 700 11px/1 var(--font); letter-spacing: 0.04em; text-transform: uppercase;
+}
+.cp-laws.discard .cp-law.on::after { content: "Discard"; background: var(--cult); color: #fff; }
+.cp-laws.enact .cp-law.on::after { content: "Enact"; background: var(--bone); color: var(--ink); }
+
+/* picking a player */
+.cp-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.cp-row {
+  flex: none; display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 14px; border: 0; border-radius: 14px;
+  background: rgba(243, 233, 210, 0.05); color: var(--bone); font: 600 17px/1 var(--font); text-align: left;
+  transition: background 150ms, box-shadow 150ms;
+}
+.cp-av { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--c); color: var(--ink); font: 800 14px/1 var(--font); }
+.cp-row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-radio { flex: none; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(243, 233, 210, 0.28); transition: box-shadow 150ms; }
+.cp-row.on { background: rgba(243, 233, 210, 0.1); box-shadow: inset 0 0 0 1.5px rgba(243, 233, 210, 0.6); }
+.cp-row.on .cp-radio { box-shadow: inset 0 0 0 7px var(--bone); }
+
+/* an investigation */
+.cp-verdict { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 16px; }
+.cp-verdict i { width: 96px; aspect-ratio: 2 / 3; border-radius: 10px; background: center / cover no-repeat; box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5); }
+.cp-verdict .inked { font-size: 44px; }
+
+/* the end */
+.cp-end { flex: 1; min-height: 0; overflow-y: auto; }
+/* cropped a little from the top: the cult poster has a printed title band there */
+.cp-end-art { display: block; aspect-ratio: 16 / 9; border-radius: 14px; background: center 85% / 118% no-repeat; }
+.cp-end h2 { margin: 16px 0 0; text-align: center; }
+.cp-end h2 .inked { font-size: 40px; }
+.cp-end > p { margin: 6px 0 0; text-align: center; font: 500 15px/1.4 var(--font); color: var(--muted); }
+.cp-roles { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cp-roles li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: rgba(243, 233, 210, 0.05); font: 600 15px/1 var(--font); }
+.cp-roles .cp-av { width: 26px; height: 26px; font-size: 12px; }
+.cp-roles em { margin-left: auto; padding: 5px 8px; border-radius: 6px; font: 700 12px/1 var(--font); font-style: normal; }
+.cp-roles em.r-town { background: rgba(62, 197, 255, 0.14); color: var(--town); }
+.cp-roles em.r-cult { background: rgba(255, 68, 102, 0.14); color: var(--cult); }
+.cp-roles em.r-prophet { background: rgba(155, 92, 255, 0.2); color: #b48cff; }
+
+/* motion: the panel's content rises in when the moment changes; cards and rows are dealt in */
+.cp-panel.swap > * { animation: cp-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.cp-panel.swap > :nth-child(2) { animation-delay: 50ms; }
+.cp-panel.swap > :nth-child(3) { animation-delay: 100ms; }
+.cp-panel.swap > :nth-child(4) { animation-delay: 150ms; }
+@keyframes cp-in { from { opacity: 0; transform: translateY(10px); } }
+.cp-panel.swap .cp-law, .cp-panel.swap .cp-row, .cp-panel.swap .cp-roles li { animation: cp-deal 360ms cubic-bezier(0.2, 1, 0.3, 1) backwards; }
+.cp-panel.swap :is(.cp-law, .cp-row, .cp-roles li):nth-child(2) { animation-delay: 60ms; }
+.cp-panel.swap :is(.cp-law, .cp-row, .cp-roles li):nth-child(3) { animation-delay: 120ms; }
+.cp-panel.swap :is(.cp-law, .cp-row, .cp-roles li):nth-child(4) { animation-delay: 180ms; }
+.cp-panel.swap :is(.cp-law, .cp-row, .cp-roles li):nth-child(5) { animation-delay: 240ms; }
+.cp-panel.swap :is(.cp-law, .cp-row, .cp-roles li):nth-child(n + 6) { animation-delay: 300ms; }
+@keyframes cp-deal { from { opacity: 0; transform: translateY(18px); } }
+
+/* ------------------------------------------------------------ mobile: the public table on every phone */
+.cp { gap: 10px; max-width: 560px; margin: 0 auto; width: 100%; }
+.cp-table { flex: none; display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border-radius: 16px; background: rgba(243, 233, 210, 0.04); box-shadow: inset 0 0 0 1px rgba(243, 233, 210, 0.07); }
+.cp-tracks { display: flex; flex-direction: column; gap: 5px; }
+.cp-track { display: flex; align-items: center; gap: 8px; }
+.cp-track > span { width: 38px; font: 800 11px/1 var(--font); letter-spacing: 0.1em; text-transform: uppercase; }
+.cp-track.town > span { color: var(--town); }
+.cp-track.cult > span { color: var(--cult); }
+.cp-slots { flex: 1; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; }
+.cp-slots i { position: relative; height: 20px; border-radius: 5px; background: rgba(243, 233, 210, 0.06); box-shadow: inset 0 0 0 1px rgba(243, 233, 210, 0.12); display: grid; place-items: center; }
+.cp-slots i.goal { box-shadow: inset 0 0 0 1.5px rgba(243, 233, 210, 0.35); }
+.cp-track.town i.on { background: var(--town); box-shadow: none; animation: cp-pop 300ms cubic-bezier(0.2, 1.6, 0.4, 1); }
+.cp-track.cult i.on { background: var(--cult); box-shadow: none; animation: cp-pop 300ms cubic-bezier(0.2, 1.6, 0.4, 1); }
+.cp-slots i b { width: 16px; height: 16px; border-radius: 50%; background: center / 130% no-repeat; opacity: 0.85; }
+.cp-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font: 600 12px/1.2 var(--font); color: var(--muted); }
+.cp-unrest { display: inline-flex; align-items: center; gap: 4px; }
+.cp-unrest i { width: 8px; height: 8px; border-radius: 50%; background: rgba(243, 233, 210, 0.15); }
+.cp-unrest i.on { background: var(--cult); }
+.cp-tnote { color: var(--brass); }
+.cp-status { margin: 2px 0 0; font: 600 15px/1.35 var(--font); color: var(--bone); min-height: 1.35em; }
+.cp-status .cp-count { margin-left: 6px; padding: 2px 7px; border-radius: 999px; background: rgba(243, 233, 210, 0.1); font-size: 12px; }
+.cp-seats { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; touch-action: pan-x; }
+.cp-seats::-webkit-scrollbar { display: none; }
+.cp-seats li { flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; width: 56px; padding: 5px 2px; border-radius: 10px; font: 600 11px/1.1 var(--font); }
+.cp-seats li.me { background: rgba(243, 233, 210, 0.08); }
+.cp-seats li .cp-av { width: 28px; height: 28px; font-size: 12px; }
+.cp-seats li.dead { opacity: 0.35; text-decoration: line-through; }
+.cp-seats li.away { opacity: 0.55; }
+.cp-seats li.target .cp-av { box-shadow: 0 0 0 2px var(--cult); }
+.cp-sn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cp-seats em { font-style: normal; padding: 2px 5px; border-radius: 5px; font-size: 9px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; background: rgba(243, 233, 210, 0.1); }
+.cp-seats em.mayor { background: var(--brass); color: var(--ink); }
+.cp-seats em.sheriff { background: var(--bone); color: var(--ink); }
+.cp-seats em.yes, .cp-seats em.done { background: #2fbf71; color: #062312; }
+.cp-seats em.no { background: var(--cult); color: #fff; }
+.cp-seats em.r-town { color: var(--town); }
+.cp-seats em.r-cult { color: var(--cult); }
+.cp-seats em.r-prophet { color: #b48cff; }
+.cp-stage { gap: 6px; }
+.cp-card { max-height: 300px; }
+.cp.tall .cp-table .cp-seats { display: none; }
+.cp-banner {
+  position: absolute; left: 16px; right: 16px; top: 34%; z-index: 5; display: flex; align-items: center; gap: 14px;
+  padding: 18px; border-radius: 18px; background: rgba(15, 14, 22, 0.96); box-shadow: 0 0 0 1px rgba(243, 233, 210, 0.15), 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+.cp-banner.show { animation: cp-in 300ms cubic-bezier(0.2, 1.4, 0.4, 1); }
+.cp-banner i { flex: none; width: 56px; height: 56px; border-radius: 50%; background: center / 130% no-repeat; }
+.cp-banner .inked { font-size: 34px; }
+.cp-banner small { display: block; margin-top: 4px; font: 500 14px/1.3 var(--font); color: var(--muted); }
+@media (max-height: 640px) { .cp-card { max-height: 200px; } .cp-hint { display: none; } }

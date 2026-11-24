@@ -1,0 +1,201 @@
+/* The lobby: the selected game fills the screen, calmly. Two typefaces (Space Grotesk, Inter), one accent at a time.
+   Light on the TV: no filter, no backdrop-filter, no animated colour properties. The "blur" is a 160x90 image
+   scaled up by the browser; the only moving things are opacity and transforms. */
+
+@property --ga { syntax: "<color>"; inherits: true; initial-value: #7c5cff; }
+@property --gb { syntax: "<color>"; inherits: true; initial-value: #2de2c9; }
+
+/* ------------------------------------------------------------------ card art (TV and phone) */
+.cv {
+  position: relative; aspect-ratio: 16 / 9; border-radius: 1em; overflow: hidden; isolation: isolate;
+  background: linear-gradient(135deg, var(--ga), var(--gb)); box-shadow: 0 0.6em 1.6em rgba(0, 0, 0, 0.35);
+}
+.cv img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.cv-drawn::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: radial-gradient(120% 90% at 15% 0%, rgba(255, 255, 255, 0.28), transparent 55%);
+}
+.cv-glyph {
+  position: absolute; right: -10%; top: -18%; width: 72%; aspect-ratio: 1; background: rgba(255, 255, 255, 0.24);
+  -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; transform: rotate(-14deg);
+}
+/* TVs without aspect-ratio (LG webOS 22 and older): size covers with padding instead */
+@supports not (aspect-ratio: 1) {
+  .cv::after { content: ""; display: block; padding-top: 56.25%; }
+  .cv-glyph { padding-top: 72%; }
+}
+.cv-cap {
+  position: absolute; inset: auto 0 0 0; display: flex; align-items: baseline; justify-content: space-between; gap: 0.6em;
+  padding: 2.6em 0.95em 0.8em; background: linear-gradient(180deg, transparent, rgba(6, 6, 12, 0.78));
+}
+.cv-cap b { font: 700 1.3em/1.1 var(--font-display); color: #fff; letter-spacing: -0.01em; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.4); }
+.cv-cap small { font-size: 0.78em; font-weight: 600; color: rgba(255, 255, 255, 0.78); white-space: nowrap; }
+
+/* ------------------------------------------------------------------ TV */
+.lb {
+  height: 100%; display: grid; grid-template-columns: 17em minmax(0, 1fr); gap: 2.6em; padding: 2.4em 3em;
+  font-size: min(1.25vw, 2.2vh); position: relative; isolation: isolate; overflow: hidden; background: var(--bg);
+}
+
+/* background, three composited layers at most:
+   1. .lb-drift: a precomputed gradient image (96x54, see driftImage in host.ts) scaled far past the screen and moved
+      by a CSS transform animation only (slow translate / rotate / scale). Moving a cached texture is a GPU composite:
+      no repaint, no filter, no per-frame script. The animation runs on the compositor thread.
+   2. .lb-bgl: the selected game's 160x90 image at half opacity (bilinear scaling is the blur); a second one exists
+      only for the 420 ms crossfade when the game changes.
+   3. .lb-bg::after: a static dark gradient so the text always reads. */
+.lb-bg { position: absolute; inset: 0; z-index: -1; background: #0d0b1f; overflow: hidden; }
+.lb-drift {
+  position: absolute; left: -30%; top: -30%; width: 160%; height: 160%; background-size: 100% 100%;
+  will-change: transform; animation: lb-drift 90s ease-in-out infinite alternate;
+}
+@keyframes lb-drift {
+  from { transform: translate3d(-4%, -3%, 0) rotate(-4deg) scale(1); }
+  to { transform: translate3d(4%, 3%, 0) rotate(4deg) scale(1.12); }
+}
+@media (prefers-reduced-motion: reduce) { .lb-drift { animation: none; will-change: auto; } }
+.lb-bgl {
+  position: absolute; inset: 0; opacity: 0; transition: opacity 420ms ease-out;
+  background: linear-gradient(135deg, var(--ga), var(--gb));
+}
+.lb-bgl[hidden] { display: none; }
+.lb-bgl.on { opacity: 0.5; }
+.lb-bgl img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; image-rendering: auto; }
+.lb-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8, 8, 14, 0.7), rgba(8, 8, 14, 0.38) 55%, rgba(8, 8, 14, 0.5)),
+    linear-gradient(0deg, rgba(8, 8, 14, 0.8), rgba(8, 8, 14, 0) 48%);
+}
+
+/* how to join */
+.lb-join {
+  display: flex; flex-direction: column; min-height: 0; padding: 1.7em; border-radius: 1.4em;
+  background: rgba(8, 8, 14, 0.62); border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.lb-logo { font-size: 1.5em; }
+.lb-join-body { margin: auto 0; display: flex; flex-direction: column; gap: 1.2em; }
+.lb-qr { aspect-ratio: 1; background: #fff; border-radius: 0.9em; padding: 0.8em; }
+.lb-qr svg { width: 100%; height: 100%; display: block; }
+.lb-url { margin: 0; color: rgba(255, 255, 255, 0.72); font-size: 0.9em; line-height: 1.45; }
+.lb-url b { display: block; color: var(--fg); font-weight: 600; font-size: 1.12em; }
+.lb-code small { display: block; color: rgba(255, 255, 255, 0.72); font-size: 0.9em; margin-bottom: 0.25em; }
+.lb-code b { display: block; font: 700 3.6em/1 var(--font-display); letter-spacing: 0.1em; }
+
+.lb-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+/* the selected game */
+.lb-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: space-between; gap: 2.6em; }
+.lb-text { min-width: 0; flex: 1; }
+.lb-text.swap { animation: lb-in 320ms ease-out; }
+.lb-eyebrow { margin: 0 0 1em; display: flex; align-items: center; gap: 0.5em; min-height: 1.4em; color: rgba(255, 255, 255, 0.78); font-size: 1.05em; }
+.lb-eyebrow b { color: #fff; font-weight: 600; }
+.lb-eyebrow .crown { width: 1.3em; flex: none; }
+.lb-eyebrow .crown svg, .seat .vip svg { display: block; width: 100%; }
+.lb-title { margin: 0; font: 700 4.6em/0.98 var(--font-display); letter-spacing: -0.035em; text-shadow: 0 0.04em 0.5em rgba(0, 0, 0, 0.35); }
+.lb-tagline { margin: 0.6em 0 0; color: rgba(255, 255, 255, 0.86); font-size: 1.25em; line-height: 1.4; max-width: 22em; }
+.lb-meta { margin: 1.4em 0 0; display: flex; align-items: center; gap: 1.2em; font-size: 1.1em; font-weight: 600; }
+.lb-pl { padding: 0.35em 0.9em; border-radius: 2em; background: rgba(255, 255, 255, 0.14); }
+.lb-play { display: inline-flex; align-items: center; gap: 0.5em; color: #fff; }
+.lb-play.short { color: #ffb4a8; }
+.lb-play:empty { display: none; }
+.lb-stats { margin: 1em 0 0; display: flex; flex-wrap: wrap; gap: 0.3em 1.6em; color: rgba(255, 255, 255, 0.78); font-size: 1.05em; font-weight: 500; }
+.lb-stats span:empty { display: none; }
+.lb-card { flex: none; width: 28em; }
+.lb-card .cv { border-radius: 1.2em; box-shadow: 0 1.4em 3.2em rgba(0, 0, 0, 0.5), 0 0 0 0.15em rgba(255, 255, 255, 0.9); animation: lb-in 320ms ease-out; }
+
+/* everyone's seat */
+.lb-foot { margin-top: 1.1em; display: flex; align-items: flex-end; justify-content: space-between; gap: 2em; }
+.lb-seats { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.8em 1em; }
+.seat { width: 5em; display: flex; flex-direction: column; align-items: center; gap: 0.4em; }
+.seat .av {
+  position: relative; width: 3.2em; height: 3.2em; border-radius: 50%; display: grid; place-items: center;
+  background: var(--c); color: #0b0b12;
+}
+.seat .av b { font: 700 1.3em var(--font-display); }
+.seat .nm { font-size: 1em; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 1.3em; }
+.seat.empty .av { background: none; border: 2px dashed rgba(255, 255, 255, 0.2); }
+.seat.away { opacity: 0.4; }
+.seat.new .av { animation: lb-pop 480ms cubic-bezier(0.2, 1.6, 0.4, 1); }
+.seat .vip { position: absolute; top: -0.62em; right: -0.42em; width: 1.4em; transform: rotate(16deg); }
+.lb-status { margin: 0 0 0.6em; color: rgba(255, 255, 255, 0.72); font-size: 1em; text-align: right; max-width: 18em; }
+
+@keyframes lb-pop { from { transform: scale(0.4); opacity: 0; } }
+@keyframes lb-in { from { opacity: 0; transform: translateY(0.4em); } }
+
+/* ------------------------------------------------------------------ phone */
+.lp {
+  height: 100%; box-sizing: border-box; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain;
+  max-width: 560px; margin: 0 auto; padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 18px;
+}
+.lp .cv { font-size: 16px; border-radius: 16px; }
+.lp h1 { margin: 0; font: 700 26px/1.1 var(--font-display); letter-spacing: -0.02em; }
+.lp h2 { margin: 0; }
+
+/* guests: you, and what the host is picking */
+.lp-guest { justify-content: space-between; }
+.lp-me { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; min-height: 200px; }
+.lp-av {
+  width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 6px;
+  background: var(--c); color: #0b0b12; font: 700 40px var(--font-display); animation: lb-pop 480ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.lp-me p { margin: 0; color: var(--muted); font-weight: 500; }
+.lp-next { display: flex; flex-direction: column; gap: 12px; }
+.lp-label { margin: 0; color: var(--muted); font-size: 16px; }
+.lp-label b { color: var(--fg); font-weight: 600; }
+.lp-next .cv { animation: lb-in 380ms ease-out; }
+
+/* the host: a grid of games, the settings of the chosen one, Play */
+.lp-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-top: 2px; }
+.lp-count { color: var(--muted); font-size: 14px; font-weight: 500; white-space: nowrap; }
+.lp-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.lp-gc {
+  display: block; width: 100%; padding: 6px 6px 8px; border: 0; border-radius: 18px; text-align: left; color: var(--fg);
+  background: var(--bg-3); font: inherit; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  box-shadow: inset 0 0 0 2px transparent; transition: transform 80ms, box-shadow 120ms, background 120ms;
+}
+.lp-gc .cv { font-size: 12px; border-radius: 13px; box-shadow: none; }
+.lp-gc:active { transform: scale(0.97); }
+.lp-gc b { display: block; margin: 8px 4px 0; font: 700 15px/1.15 var(--font-display); letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-gc small { display: block; margin: 2px 4px 0; color: var(--muted); font-size: 12.5px; font-weight: 500; }
+.lp-gc.sel { background: color-mix(in srgb, var(--ga) 22%, var(--bg-3)); box-shadow: inset 0 0 0 2.5px #fff, 0 6px 18px color-mix(in srgb, var(--ga) 35%, transparent); }
+.lp-gc.sel::after {
+  content: ""; position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 50%; background: #fff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%230b0b12' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+}
+.lp-gc { position: relative; }
+.lp-gc.locked:not(.sel) { opacity: 0.6; }
+.lp-pick { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+.lp-pick b { color: var(--fg); font-weight: 600; }
+.lp-settings h2, .lp-players h2 { margin: 6px 0 12px; font: 600 13px var(--font); color: var(--muted); letter-spacing: 0.04em; }
+.lp-pl { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.lp-pl li {
+  max-width: 100%; padding: 6px 12px; border-radius: 16px; background: var(--bg-3); font-weight: 600; font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.lp-pl li.away { opacity: 0.55; }
+.lp-pl small { color: var(--muted); font-weight: 500; }
+.lp-go {
+  position: sticky; bottom: 0; margin: auto -20px 0; padding: 24px 20px calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, var(--bg) 40%);
+}
+.lp-start {
+  width: 100%; height: 60px; border: 0; border-radius: 16px; color: #fff; font: 700 19px var(--font);
+  background: linear-gradient(135deg, var(--ga), var(--gb)); box-shadow: 0 8px 24px color-mix(in srgb, var(--ga) 35%, transparent);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3); transition: transform 100ms, filter 150ms;
+}
+.lp-start.pressed { transform: scale(0.98); }
+.lp-start:disabled { background: var(--bg-3); color: var(--muted); box-shadow: none; text-shadow: none; }
+
+/* ------------------------------------------------------------ mobile: invite card */
+.lp-invite { display: flex; align-items: center; gap: 14px; padding: 12px; margin-bottom: 16px; border-radius: 16px; background: var(--bg-2, #14141f); box-shadow: inset 0 0 0 1px #262538; }
+.lp-qr { flex: none; width: 96px; height: 96px; padding: 5px; border-radius: 10px; background: #fff; }
+.lp-qr svg { display: block; width: 100%; height: 100%; }
+.lp-inv-text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.lp-inv-text small { font: 700 11px/1 var(--font); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.lp-code { font: 700 30px/1.05 var(--font-display); letter-spacing: 0.18em; color: var(--accent-2); }
+.lp-inv-text span { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-share { margin-top: 6px; align-self: flex-start; padding: 8px 12px; border: 0; border-radius: 10px; background: var(--accent); font: 700 14px/1 var(--font); cursor: pointer; }
+.lp-guest .lp-invite { margin: 0 0 12px; }
+@media (min-width: 700px) { .lp { max-width: 640px; margin: 0 auto; } }

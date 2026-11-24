@@ -1,0 +1,45 @@
+# Cascade: the phone controller and the game's pace.
+# Save this file and phones pick up the change. Syntax and every setting: web/src/games/kit/pad.ts
+# The stick moves your cursor on the TV one cell per push (hold it to keep going); Place drops a piece there.
+
+controller
+  orientation  any           # turn-based: hold it however you like
+  send-rate    10hz          # the stick isn't streamed; each step is its own message
+
+stick move
+  label        "Move"
+  mode         floating
+  follow       yes
+  travel       36px
+  deadzone     18%
+  full-at      70%
+  curve        1
+  directions   4             # up, down, left, right: one cell at a time
+  haptic       6ms
+  rim-haptic   0ms
+
+button place
+  label        "Place"
+  hint         "Drop a piece in the cell your cursor is on."
+  icon         action
+  style        primary
+  shape        round
+  haptic       22ms
+  fires        press
+
+buzz                         # ms on, off, on…
+  turn         40 60 40      # your turn
+  nope         12 40 12      # that cell isn't yours
+  wait         8             # pressed Place on someone else's turn
+  out          250
+  win          40 40 40 40 120
+  lose         300
+
+tune
+  repeat-delay 280           # ms holding the stick before it starts repeating
+  repeat-every 120           # ms between steps while held
+  step-buzz    6             # ms tap on the phone for each step (0 = off)
+  bot-think    700           # ms a computer looks at the board before it moves
+  bot-walk     110           # ms per cell as a computer walks its cursor over
+  away-wait    3000          # ms before the computer plays for someone whose phone dropped
+  away-skip    20000         # turn timer off: ms before the turn of someone whose phone is on another app passes on

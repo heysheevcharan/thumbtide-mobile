@@ -1,0 +1,38 @@
+# Cult: the phone controller and the game's pace.
+# Save this file and phones pick up the change. Syntax and every setting: web/src/games/kit/pad.ts
+# The phone shows your role card (hold it to look) and a panel for the current move: pick, then confirm.
+
+controller
+  orientation  portrait
+
+button yes
+  label        "Yes"
+  hint         "Back this Mayor and Sheriff."
+  haptic       20ms
+
+button no
+  label        "No"
+  hint         "Vote them down."
+  haptic       20ms
+
+choices pick                 # choosing a player: your Sheriff, or who to investigate, promote or burn
+  hint         "Tap a name, then confirm."
+  haptic       12ms
+
+choices cards                # the Mayor discards one law, the Sheriff enacts one
+  hint         "Tap a law, then confirm."
+  haptic       16ms
+
+buzz                         # ms on, off, on…
+  turn         40 60 40      # your move
+  vote         25            # voting is open
+  burned       200 80 200
+  win          40 40 40 40 120
+  lose         300
+
+tune                         # the game's pace, in ms
+  roles-time   30000         # to look at your role before the first Mayor starts (or once everyone taps Ready)
+  tally-time   3500          # the votes stay up
+  law-time     3000          # a new law stays up
+  burn-time    3500
+  bot-think    1600          # roughly how long computer players take

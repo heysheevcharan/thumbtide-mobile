@@ -1,0 +1,160 @@
+/* ======================================================================== juicy text
+   Big glossy candy lettering for callouts: <span class="juicy gold" data-text="TURBO!"><span>TURBO!</span></span>
+   The outline is a copy behind the fill, so the gradient fill stays crisp on top. The hard step in each
+   gradient is the candy's shine. */
+.juicy {
+  --jg: linear-gradient(180deg, #fffde6 0%, #fff0a0 34%, #ffd21f 35%, #ff9d1a 72%, #ff6a00 100%);
+  --jk: #6b2400;
+  position: relative; display: inline-block; font-family: "Baloo 2", "Arial Rounded MT Bold", system-ui, sans-serif;
+  font-weight: 800; line-height: 1; letter-spacing: 0.01em; white-space: nowrap;
+}
+.juicy::before {
+  content: attr(data-text); position: absolute; left: 0; top: 0; color: var(--jk);
+  -webkit-text-stroke: 0.2em var(--jk);
+  text-shadow: 0 0.09em 0 var(--jk), 0 0.16em 0.25em rgba(0, 0, 0, 0.45);
+}
+.juicy > span {
+  position: relative; color: transparent; background: var(--jg); -webkit-background-clip: text; background-clip: text;
+}
+.juicy.candy { --jg: linear-gradient(180deg, #fff0f8 0%, #ffc4e2 34%, #ff6fb4 35%, #ff3d9a 70%, #c8106b 100%); --jk: #4f0430; }
+.juicy.mint  { --jg: linear-gradient(180deg, #f6ffee 0%, #c8fbb8 34%, #5fe07f 35%, #22c05e 70%, #0e8a44 100%); --jk: #053a1e; }
+.juicy.sky   { --jg: linear-gradient(180deg, #f2fcff 0%, #bdf0ff 34%, #5cc2ff 35%, #2f8cf0 70%, #1556c4 100%); --jk: #08234f; }
+.juicy.grape { --jg: linear-gradient(180deg, #faf2ff 0%, #e2c6ff 34%, #b47bff 35%, #8a45f0 70%, #5c1bc4 100%); --jk: #26074f; }
+.juicy.fire  { --jg: linear-gradient(180deg, #fffbe6 0%, #ffe08a 34%, #ff9a2b 35%, #ff5a1f 68%, #d0170f 100%); --jk: #4f0700; }
+.juicy.ice   { --jg: linear-gradient(180deg, #ffffff 0%, #eafbff 34%, #a9e4ff 35%, #6cc0f5 70%, #3a8fe0 100%); --jk: #0b2f55; }
+.juicy.ink   { --jg: linear-gradient(180deg, #ffffff 0%, #fffaf0 34%, #f1e6cc 35%, #d9c7a0 100%); --jk: #2a1d14; }
+
+/* ======================================================================== controls list (help sheet) */
+.ct { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ct li { display: grid; grid-template-columns: 36px 1fr; column-gap: 12px; align-items: center; }
+.ct li > b { font-weight: 700; }
+.ct li > span:not(.ct-ico) { grid-column: 2; color: var(--muted); font-size: 0.9em; line-height: 1.35; }
+.ct-ico {
+  grid-row: span 2; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: #fff;
+  background: var(--bg-3);
+}
+.ct-ico.primary { background: linear-gradient(135deg, var(--ga), var(--gb)); }
+.ct-ico svg { width: 20px; height: 20px; }
+
+/* ======================================================================== phone gamepad
+   Two thumbs: stick under the left, buttons under the right, in either orientation (swapped for lefties).
+   Kept clear of the notch, the home bar and the screen edges, where swipes belong to the phone. */
+.gp {
+  --edge: max(14px, env(safe-area-inset-left));
+  --edge-r: max(14px, env(safe-area-inset-right));
+  height: 100%; display: grid; gap: 12px; box-sizing: border-box;
+  padding: 10px var(--edge-r) max(14px, env(safe-area-inset-bottom)) var(--edge);
+  grid-template: "top top" auto "stick btns" 1fr / 1.35fr 1fr;
+}
+.gp.gp-swap { grid-template: "top top" auto "btns stick" 1fr / 1fr 1.35fr; }
+.gp.gp-nostick, .gp.gp-nostick.gp-swap { grid-template: "top" auto "btns" 1fr / 1fr; }
+/* holding it upright, thumbs live in the lower part of the screen: controls go there, status on top */
+@media (orientation: portrait) {
+  .gp { grid-template: "top top" minmax(0, 1fr) "stick btns" minmax(0, 58%) / 1.15fr 1fr; }
+  .gp.gp-swap { grid-template: "top top" minmax(0, 1fr) "btns stick" minmax(0, 58%) / 1fr 1.15fr; }
+  .gp-top { display: flex; flex-direction: column; }
+}
+.gp-top { grid-area: top; min-width: 0; }
+.gp-stick {
+  grid-area: stick; position: relative; border-radius: 28px; overflow: hidden; touch-action: none;
+  background: radial-gradient(circle at 50% 55%, #1d1c2e 0%, #131221 75%);
+  box-shadow: inset 0 0 0 2px #24233a;
+}
+.gp-stick-hint {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  pointer-events: none; color: var(--muted); font-weight: 600; font-size: 14px; text-align: center; padding: 0 16px;
+  transition: opacity 200ms;
+}
+.gp-stick-hint i {
+  width: 64px; height: 64px; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.18);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0 26%, transparent 28%);
+  animation: gp-breathe 2.2s ease-in-out infinite;
+}
+@keyframes gp-breathe { 50% { transform: scale(1.12); opacity: 0.6; } }
+.gp-stick:has(.tt-stick.on) .gp-stick-hint, .gp-touched .gp-stick-hint { opacity: 0; }
+.gp-btns { grid-area: btns; display: flex; flex-direction: column-reverse; gap: 12px; min-width: 0; }
+.gp-b1 .gp-btns .gp-btn { flex: 1; }
+.gp-btns .gp-btn.primary { flex: 1.7; }
+.gp-btns .gp-btn.secondary { flex: 1; }
+.gp-btn {
+  --b1: var(--cl, #ff8a65); --b2: var(--c, #e5533d);
+  position: relative; overflow: hidden; border: 0; border-radius: 28px; min-height: 64px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: linear-gradient(180deg, var(--b1), var(--b2)); color: #fff;
+  font: 800 28px/1 "Baloo 2", system-ui, sans-serif; letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.22), inset 0 3px 0 rgba(255, 255, 255, 0.35), 0 6px 0 rgba(0, 0, 0, 0.4), 0 12px 24px rgba(0, 0, 0, 0.35);
+  transition: transform 60ms, box-shadow 60ms, filter 150ms, opacity 150ms;
+  touch-action: none; -webkit-user-select: none; user-select: none;
+}
+.gp-btn::before {
+  content: ""; position: absolute; left: 12%; right: 12%; top: 7px; height: min(30%, 34px); border-radius: 50% / 60% 60% 40% 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0)); pointer-events: none;
+}
+.gp-btn.secondary { --b1: #5d5b80; --b2: #34334f; font-size: 22px; }
+.gp-btn.pressed {
+  transform: translateY(5px) scale(0.98); filter: brightness(1.12); transition: none;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.22), inset 0 3px 0 rgba(255, 255, 255, 0.35), 0 1px 0 rgba(0, 0, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.gp-btn.off { filter: grayscale(0.7) brightness(0.7); }
+.gp-ico svg { width: 30px; height: 30px; display: block; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.25)); }
+.gp-btn.secondary .gp-ico svg { width: 24px; height: 24px; }
+@media (orientation: portrait) and (max-width: 420px) {
+  .gp-btn { font-size: 24px; }
+  .gp-btn.secondary { font-size: 19px; }
+}
+
+/* round: one big arcade buzzer, centred in its space */
+.gp-btns:has(.gp-btn.round) { container-type: size; align-items: center; justify-content: center; }
+.gp-b1 .gp-btns .gp-btn.round, .gp-btns .gp-btn.round {
+  flex: none; width: min(86cqw, 86cqh); height: min(86cqw, 86cqh); min-height: 0; border-radius: 50%;
+  font-size: clamp(30px, 12cqmin, 72px);
+  box-shadow: inset 0 -12px 0 rgba(0, 0, 0, 0.22), inset 0 4px 0 rgba(255, 255, 255, 0.35), 0 0 0 10px #1b1a2b, 0 0 0 12px #2c2b44, 0 14px 0 10px #0d0c16;
+}
+.gp-btns .gp-btn.round.pressed { transform: translateY(8px) scale(0.98); }
+
+/* ------------------------------------------------------------------ inked: display lettering for the big moments
+   A heavy, high-contrast serif in one ink, like a film title on a poster. `.print` adds a second ink a little
+   off-register behind it (logos only: on words people need to read it just costs legibility). */
+.inked {
+  --ink-a: #f3e9d2; --ink-b: #ff4466;
+  display: inline-block; font-family: "Playfair Display", Georgia, serif; font-weight: 800; line-height: 1.02;
+  letter-spacing: -0.01em; white-space: nowrap; color: var(--ink-a); text-shadow: 0 0.06em 0.25em rgba(0, 0, 0, 0.55);
+}
+.inked.print { text-shadow: 0.035em 0.03em 0 var(--ink-b), 0 0.06em 0.25em rgba(0, 0, 0, 0.55); }
+.inked.bone { --ink-a: #f3e9d2; --ink-b: #ff4466; }
+.inked.town { --ink-a: #3ec5ff; --ink-b: #e0b062; }
+.inked.cult { --ink-a: #ff4466; --ink-b: #5b2bd6; }
+.inked.prophet { --ink-a: #b48cff; --ink-b: #ff4466; }
+.inked.gold { --ink-a: #ffd36b; --ink-b: #ff4466; }
+.inked.go { --ink-a: #7cf29a; --ink-b: #5b2bd6; }
+.inked.stop { --ink-a: #ff4466; --ink-b: #f3e9d2; }
+
+/* choices: a list the game fills in, over the other controls */
+.gp-choices {
+  grid-row: 2 / -1; grid-column: 1 / -1; z-index: 2; display: flex; flex-direction: column; gap: 10px; min-height: 0;
+  background: var(--bg);
+}
+.gp-ch-head { margin: 0; font: 700 16px/1.2 var(--font-display); color: var(--muted); }
+.gp-ch-timer { display: block; height: 6px; border-radius: 3px; background: var(--c, var(--accent)); transform-origin: left; }
+.gp-ch-timer.run { animation: gp-drain var(--ms, 6s) linear forwards; }
+@keyframes gp-drain { to { transform: scaleX(0); } }
+.gp-ch-opts { flex: 1; min-height: 0; display: grid; gap: 10px; grid-auto-rows: 1fr; }
+.gp-ch-grid .gp-ch-opts { grid-template-columns: 1fr 1fr; }
+.gp-ch-row .gp-ch-opts { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); grid-auto-rows: auto; }
+@media (orientation: landscape) { .gp-ch-auto .gp-ch-opts { grid-template-columns: 1fr 1fr; } }
+.gp-ch {
+  display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 16px; border: 0; border-radius: 18px; text-align: left;
+  background: var(--bg-3); font: 700 19px/1.2 var(--font); touch-action: none; transition: transform 60ms, opacity 150ms;
+}
+.gp-ch.pressed { transform: scale(0.97); }
+.gp-ch-k {
+  flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--k, rgba(255, 255, 255, 0.08)); font: 700 16px/1 var(--font-display);
+}
+.gp-ch-k[style] { color: #0b0b12; }
+.gp-ch.armed { box-shadow: inset 0 0 0 3px var(--c, var(--accent)); }
+.gp-ch.armed::after { content: "Tap again"; margin-left: auto; font: 600 14px/1 var(--font); opacity: 0.75; white-space: nowrap; }
+.gp-ch.picked { background: var(--c, var(--accent)); color: #fff; }
+.gp-ch.off { opacity: 0.3; text-decoration: line-through; }
+.gp-ch-done .gp-ch:not(.picked) { opacity: 0.3; }

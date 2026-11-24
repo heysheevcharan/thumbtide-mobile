@@ -1,0 +1,213 @@
+/* ======================================================================== TV
+   Sized in vh so it reads the same on any 16:9 screen. Kept to what the TV's Chromium 79–87 understands:
+   no color-mix(), :has() or aspect-ratio, and no backdrop blur over the 3D canvas. */
+.cz { position: absolute; inset: 0; overflow: hidden; }
+.cz-stage { position: absolute; inset: 0; }
+.cz-hud-root { position: absolute; inset: 0; pointer-events: none; }
+
+.cz-hud {
+  /* Culture: light lab panels */
+  --panel: rgba(255, 252, 246, 0.9); --panel-solid: #fffcf6; --ink: #2b2219; --muted: #8a765f;
+  --line: rgba(70, 45, 20, 0.14); --shadow: 0 0.6vh 2.4vh rgba(60, 40, 20, 0.16);
+  --display: "Space Grotesk", "Inter", system-ui, sans-serif; --pop: var(--cm);
+  font-family: "Inter", system-ui, sans-serif; color: var(--ink);
+}
+.cz-hud[data-look="marbles"] {
+  --panel: rgba(30, 20, 13, 0.86); --panel-solid: #22170f; --ink: #f6eadb; --muted: #b39d84;
+  --line: rgba(255, 220, 180, 0.12); --shadow: 0 0.8vh 3vh rgba(0, 0, 0, 0.55);
+  --display: "Fraunces", Georgia, serif; --pop: var(--cl);
+}
+.cz-hud[data-look="reactor"] {
+  --panel: rgba(9, 12, 20, 0.86); --panel-solid: #090c14; --ink: #e9f2ff; --muted: #7f8ba3;
+  --line: rgba(140, 170, 255, 0.16); --shadow: 0 0 3vh rgba(0, 0, 0, 0.6); --pop: var(--cl);
+}
+
+/* a player's piece, drawn the way the look draws it */
+.cz-piece { display: block; flex: none; border-radius: 50%; width: 3vh; height: 3vh; }
+.cz-hud .cz-piece {
+  background: radial-gradient(circle, var(--cd) 0 18%, var(--cl) 23% 58%, var(--c) 64% 100%);
+  box-shadow: inset 0 0 0 0.3vh var(--cd);
+}
+.cz-hud[data-look="marbles"] .cz-piece {
+  background: radial-gradient(circle at 34% 30%, #fff 0 7%, var(--cl) 17%, var(--c) 52%, var(--cd) 100%);
+  box-shadow: 0 0.3vh 0.7vh rgba(0, 0, 0, 0.55);
+}
+.cz-hud[data-look="reactor"] .cz-piece {
+  background: radial-gradient(circle, #fff 0 16%, var(--cl) 34%, var(--c) 72%);
+  box-shadow: 0 0 1.4vh 0.15vh var(--c);
+}
+
+/* ---------------------------------------------------------------- the players, down the left */
+.cz-rail {
+  position: absolute; left: 2.2vw; top: 50%; width: 17vw; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 1.1vh;
+}
+.cz-seat {
+  position: relative; overflow: hidden; display: grid; grid-template-columns: 4.4vh minmax(0, 1fr) auto;
+  column-gap: 1.3vh; row-gap: 0.15vh; align-items: center;
+  padding: 1.3vh 1.6vh; border-radius: 1.6vh; background: var(--panel); box-shadow: var(--shadow);
+  border: 0.25vh solid transparent;
+  transition: transform 300ms cubic-bezier(0.2, 1.4, 0.4, 1), border-color 250ms, opacity 400ms;
+}
+.cz-seat > .cz-piece { grid-row: 1 / span 2; width: 4.4vh; height: 4.4vh; }
+.cz-seat .cz-name {
+  grid-column: 2; grid-row: 1; align-self: end;
+  font-weight: 700; font-size: 2.3vh; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cz-seat .cz-sub { grid-column: 2; grid-row: 2; align-self: start; font-size: 1.65vh; color: var(--muted); white-space: nowrap; }
+.cz-seat .cz-wins { grid-column: 3; grid-row: 1 / span 2; }
+.cz-sub b { color: var(--ink); font-weight: 700; }
+.cz-sub em {
+  font-style: normal; margin-left: 0.9vh; padding: 0.05vh 0.6vh; border-radius: 0.6vh; border: 0.15vh solid var(--line);
+  font-size: 1.25vh; font-weight: 700; letter-spacing: 0.08em;
+}
+.cz-wins {
+  display: none; align-items: center; gap: 0.4vh; font: 700 2vh var(--display); color: var(--ink);
+}
+.cz-wins.has { display: flex; }
+.cz-wins.has::before {
+  content: ""; width: 1.9vh; height: 1.9vh; background: #f2b631;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 18 4 7l5 4 3-6 3 6 5-4 1 11z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 18 4 7l5 4 3-6 3 6 5-4 1 11z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.cz-seat.on { border-color: var(--c); transform: translateX(1.4vw); }
+.cz-hud[data-look="reactor"] .cz-seat.on { box-shadow: 0 0 2.6vh -0.4vh var(--c), var(--shadow); }
+.cz-seat.out { opacity: 0.38; }
+.cz-seat.out .cz-name { text-decoration: line-through; }
+.cz-seat.away .cz-name { opacity: 0.6; }
+.cz-time { position: absolute; left: 0; right: 0; bottom: 0; height: 0.55vh; opacity: 0; transition: opacity 200ms; }
+.cz-time.run { opacity: 1; }
+.cz-time i { display: block; height: 100%; background: var(--c); transform-origin: left center; will-change: transform; } /* its own layer: it moves every frame */
+.cz-time.low i { animation: cz-blink 0.5s steps(2) infinite; }
+
+/* ---------------------------------------------------------------- above the board: whose turn, the chain */
+.cz-turn, .cz-chain {
+  position: absolute; left: 58.5%; top: 3.2vh; transform: translateX(-50%); white-space: nowrap;
+  transition: opacity 250ms;
+}
+.cz-turn {
+  display: flex; align-items: center; gap: 1.2vh; padding: 1vh 2.4vh 1vh 1.2vh; border-radius: 99vh;
+  background: var(--panel); box-shadow: var(--shadow); font-size: 2.6vh; opacity: 0;
+}
+.cz-turn.show { opacity: 1; }
+.cz-turn.hush { opacity: 0; }
+.cz-turn .cz-piece { width: 3.6vh; height: 3.6vh; }
+.cz-turn span { color: var(--muted); font-weight: 600; }
+.cz-turn b { color: var(--ink); font-weight: 800; }
+.cz-turn.pop { animation: cz-pop 380ms cubic-bezier(0.2, 1.5, 0.4, 1); }
+.cz-chain { display: flex; align-items: baseline; gap: 1.2vh; font-family: var(--display); opacity: 0; top: 2vh; }
+.cz-chain.show { opacity: 1; }
+.cz-chain small {
+  font: 700 2.1vh var(--display); text-transform: uppercase; letter-spacing: 0.22em; color: var(--muted);
+}
+.cz-chain b {
+  display: block; font-size: 7vh; font-weight: 700; line-height: 1; color: var(--pop);
+  text-shadow: 0 0.4vh 1.6vh rgba(0, 0, 0, 0.18);
+}
+.cz-hud[data-look="reactor"] .cz-chain b { text-shadow: 0 0 2.4vh var(--c); }
+.cz-chain b.tick { animation: cz-tick 260ms ease-out; }
+
+/* ---------------------------------------------------------------- notes, under the board */
+.cz-notes {
+  position: absolute; left: 58.5%; bottom: 2.6vh; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 1vh;
+}
+.cz-note {
+  display: flex; align-items: center; gap: 1vh; padding: 1vh 2.4vh; border-radius: 99vh; white-space: nowrap;
+  background: var(--panel); box-shadow: var(--shadow); font-size: 2.2vh; color: var(--muted);
+  border-left: 0.7vh solid var(--c); animation: cz-in 320ms ease-out; transition: opacity 400ms, transform 400ms;
+}
+.cz-note b { color: var(--ink); }
+.cz-note.bye { opacity: 0; transform: translateY(1vh); }
+
+/* ---------------------------------------------------------------- the winner */
+.cz-end {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-left: 17vw;
+  background: radial-gradient(ellipse at 58% 50%, rgba(0, 0, 0, 0) 20%, rgba(0, 0, 0, 0.35) 100%);
+  animation: cz-fade 500ms ease-out;
+}
+.cz-end-card {
+  min-width: 46vh; padding: 4.4vh 5.4vh 3.6vh; border-radius: 3vh; text-align: center;
+  background: var(--panel-solid); box-shadow: 0 2vh 6vh rgba(0, 0, 0, 0.35); border-top: 0.8vh solid var(--c);
+  animation: cz-rise 600ms cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+.cz-end-card > .cz-piece.big { width: 9vh; height: 9vh; margin: 0 auto 2vh; }
+.cz-end-card h1 { margin: 0; font: 700 6.4vh/1.05 var(--display); color: var(--ink); white-space: nowrap; }
+.cz-end-card h1 b { color: var(--pop); }
+.cz-end-round { margin: 1.2vh 0 2.8vh; font-size: 1.8vh; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.cz-standings { list-style: none; margin: 0 auto; padding: 0; width: 40vh; display: flex; flex-direction: column; gap: 0.7vh; text-align: left; }
+.cz-standings li { display: flex; align-items: center; gap: 1.3vh; padding: 0.8vh 1.2vh; border-radius: 1.2vh; font-size: 2.2vh; }
+.cz-standings li:first-child { background: rgba(127, 127, 127, 0.1); box-shadow: inset 0 0 0 0.2vh var(--c); }
+.cz-standings .cz-place { width: 4vh; font-weight: 700; color: var(--muted); font-size: 1.8vh; }
+.cz-standings .cz-piece { width: 2.8vh; height: 2.8vh; }
+.cz-standings .cz-name { flex: 1; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cz-end-next { margin: 2.8vh 0 0; font-size: 1.9vh; color: var(--muted); }
+.cz-end-next b { color: var(--ink); }
+
+@keyframes cz-pop { from { transform: translateX(-50%) scale(0.86); } to { transform: translateX(-50%) scale(1); } }
+@keyframes cz-tick { from { transform: scale(1.35); } to { transform: scale(1); } }
+@keyframes cz-in { from { opacity: 0; transform: translateY(1.2vh); } to { opacity: 1; transform: none; } }
+@keyframes cz-rise { from { opacity: 0; transform: translateY(4vh) scale(0.94); } to { opacity: 1; transform: none; } }
+@keyframes cz-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cz-blink { 50% { opacity: 0.3; } }
+
+/* ======================================================================== phone */
+.czc { position: relative; height: 100%; }
+.czc .czc-piece {
+  display: block; flex: none; border-radius: 50%; width: 16px; height: 16px;
+  background: radial-gradient(circle at 34% 30%, #fff 0 8%, var(--cl, #ccc) 20%, var(--c, #999) 55%, var(--cd, #555) 100%);
+}
+.czc-top { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 2px 2px 0; }
+.czc-me { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; color: var(--muted); }
+.czc-me b { color: var(--fg); }
+.czc-wins { margin-left: auto; font-size: 13px; }
+.czc-status {
+  display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-radius: 22px;
+  background: var(--bg-2); box-shadow: inset 0 0 0 2px var(--bg-3); transition: background 250ms, box-shadow 250ms;
+}
+.czc-status > div { min-width: 0; }
+.czc-status .czc-piece { width: 42px; height: 42px; }
+.czc-big { display: block; font: 700 24px/1.15 var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.czc-small { display: block; margin-top: 3px; font-size: 14px; color: var(--muted); }
+.czc-small:empty { display: none; }
+.czc-mine .czc-status { background: linear-gradient(135deg, var(--c), var(--cd)); box-shadow: 0 10px 28px -10px var(--c); }
+.czc-mine .czc-status .czc-piece { box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85); }
+.czc-mine .czc-big { color: #fff; }
+.czc-mine .czc-small { color: rgba(255, 255, 255, 0.82); }
+.czc-timer { display: block; height: 6px; border-radius: 3px; background: var(--bg-3); overflow: hidden; visibility: hidden; }
+.czc-timer.run { visibility: visible; }
+.czc-timer i { display: block; height: 100%; background: var(--c); transform-origin: left center; }
+.czc-timer.low i { background: #ff5d73; }
+.czc-idle .gp-stick { opacity: 0.4; transition: opacity 200ms; }
+.czc .gp-btn.round .gp-ico svg { width: 38px; height: 38px; }
+
+/* over the controls: waiting, watching, out, and the end of a round */
+.czc-over {
+  position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 24px max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  background: var(--bg); text-align: center; overflow-y: auto;
+}
+.czc-over h2 { margin: 6px 0 0; font: 700 28px/1.15 var(--font-display); }
+.czc-over p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.4; }
+.czc-over .czc-piece.big { width: 64px; height: 64px; margin-bottom: 6px; }
+.czc-end-over { justify-content: flex-start; }
+.czc-end { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 18px; margin: auto 0; }
+.czc-end-me { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.czc-end-me h2 { font-size: 32px; }
+.czc-actions { display: flex; gap: 10px; margin-top: 12px; width: 100%; max-width: 360px; }
+.czc-btn {
+  flex: 1; border: 0; border-radius: 16px; padding: 15px 12px; font: 700 18px var(--font); color: var(--fg); background: var(--bg-3);
+}
+.czc-btn.primary { background: var(--accent); color: #fff; }
+.czc-wait { margin-top: 10px !important; }
+.czc-wait b { color: var(--fg); }
+.czc-results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.czc-results li { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--bg-2); font-size: 16px; }
+.czc-results li.me { box-shadow: inset 0 0 0 2px var(--c); }
+.czc-results .rk { width: 34px; color: var(--muted); font-weight: 700; font-size: 14px; }
+.czc-results .nm { flex: 1; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.czc-results b { color: var(--muted); font-size: 13px; font-weight: 600; }
+@media (orientation: landscape) {
+  .czc-end { flex-direction: row; align-items: center; gap: 28px; }
+  .czc-end > * { flex: 1; min-width: 0; }
+}

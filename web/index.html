@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b0b12" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Thumbtide" />
+    <meta name="description" content="Party games played on everyone's phone: Odd Word Out, Inkling, Cascade and Cult." />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <title>Thumbtide Mobile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700;800&family=Baloo+2:wght@700;800&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet" />
+  </head>
+  <body class="phone">
+    <form id="join-form" autocomplete="off">
+      <h1 class="logo">thumb<span>tide</span></h1>
+      <p class="tagline">Party games on everyone's phone. No TV, no app.</p>
+      <label>
+        Your name
+        <input id="name" name="name" maxlength="20" placeholder="Name" autocomplete="nickname" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="done" required />
+      </label>
+      <button type="button" id="create" class="big">Start a room</button>
+      <div class="or"><span>or join friends</span></div>
+      <div class="join-row">
+        <input id="code" name="code" inputmode="text" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="go" maxlength="4" placeholder="CODE" aria-label="Room code" />
+        <button type="submit" class="big alt">Join</button>
+      </div>
+      <p id="join-error" class="error" role="alert"></p>
+      <p class="fine">Everyone opens this page on their own phone. One person starts a room and keeps this page open while you play.</p>
+    </form>
+    <header id="shellbar" hidden>
+      <span class="sb-net" title="Connection"></span>
+      <span class="sb-room"></span>
+      <span class="sb-me"></span>
+      <button class="sb-btn sb-fs" aria-label="Full screen" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button class="sb-btn sb-help" aria-label="How to play" hidden>?</button>
+      <button class="sb-btn sb-host" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 12H5z"/></svg>Host</button>
+    </header>
+    <div id="game" hidden></div>
+    <div id="paused" hidden></div>
+    <div id="rotate" hidden><div class="rot-phone"></div><p>Turn your phone sideways</p></div>
+    <div id="sheet" hidden><div class="sh-backdrop"></div><div class="sh-panel" data-scroll></div></div>
+    <div id="overlay" hidden><div class="spinner"></div><p></p></div>
+    <script type="module" src="/src/shell/app.ts"></script>
+  </body>
+</html>
