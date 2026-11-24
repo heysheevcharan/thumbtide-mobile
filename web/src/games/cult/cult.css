@@ -251,8 +251,23 @@
 /* the card */
 .cp-stage { flex: 1; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center; gap: 12px; }
 .cp-card { position: relative; height: 100%; max-height: 440px; aspect-ratio: 2 / 3; perspective: 1200px; touch-action: none; }
+.cp-card { -webkit-touch-callout: none; cursor: pointer; transition: transform 150ms; }
+.cp-card.open { transform: scale(0.94); }
 .cp-card-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 460ms cubic-bezier(0.2, 0.8, 0.2, 1); }
-.cp-card.open .cp-card-in { transform: rotateY(180deg); }
+
+/* holding the card: a big copy in the middle of the screen, sized to fit any phone, turns over */
+.cp-peek {
+  position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; padding: 16px;
+  background: rgba(5, 5, 10, 0.78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 180ms, visibility 0s 180ms;
+}
+.cp.peeking .cp-peek { opacity: 1; visibility: visible; transition: opacity 180ms; }
+.cp-peek-card {
+  position: relative; width: min(86vw, 360px, calc((100dvh - 64px) * 2 / 3)); aspect-ratio: 2 / 3;
+  perspective: 1400px; container-type: inline-size; transform: scale(0.9); transition: transform 300ms cubic-bezier(0.2, 1.2, 0.4, 1);
+}
+.cp.peeking .cp-peek-card { transform: none; }
+.cp.peeking .cp-card-in { transform: rotateY(180deg); }
 .cp-face {
   position: absolute; inset: 0; border-radius: 18px; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden;
   box-shadow: 0 0 0 1px rgba(243, 233, 210, 0.14), 0 24px 50px rgba(0, 0, 0, 0.6);
@@ -261,18 +276,19 @@
 .cp-front { transform: rotateY(180deg); background: #15141c; }
 .cp-front-art { position: absolute; inset: 0; background: center 12% / cover no-repeat; }
 .cp-front-text {
-  position: absolute; left: 0; right: 0; bottom: 0; padding: 70px 16px 18px; text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  position: absolute; left: 0; right: 0; bottom: 0; max-height: 100%; overflow: hidden; box-sizing: border-box;
+  padding: 22cqw 6cqw 6cqw; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 1.8cqw;
   background: linear-gradient(180deg, transparent, rgba(11, 11, 18, 0.88) 36%, rgba(11, 11, 18, 0.97));
 }
-.cp-front-text small { font: 700 11px/1 var(--font); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.cp-front-text small { font: 700 clamp(10px, 3.4cqw, 13px)/1 var(--font); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .cp-front-text h3 { margin: 0; }
-.cp-front-text h3 .inked { font-size: 32px; }
-.cp-front-text p { margin: 0; font: 500 13px/1.4 var(--font); }
-.cp-front-text .cp-allies { margin-top: 2px; color: var(--muted); font-size: 12px; }
+.cp-front-text h3 .inked { font-size: clamp(26px, 12cqw, 46px); }
+.cp-front-text p { margin: 0; font: 500 clamp(13px, 4.4cqw, 17px)/1.4 var(--font); }
+.cp-front-text .cp-allies { margin-top: 1cqw; color: var(--muted); font-size: clamp(12px, 4cqw, 15px); }
 .cp-hint { margin: 0; font: 500 13px/1 var(--font); color: var(--muted); transition: opacity 200ms; }
 .cp-card.open + .cp-hint, .cp:not(.has-role) .cp-hint { opacity: 0; }
-.cp.burned .cp-back { filter: grayscale(1) brightness(0.45); }
+.cp.burned .cp-card .cp-back { filter: grayscale(1) brightness(0.45); }
 .cp.burned .cp-card::after {
   content: "Burned"; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-10deg); pointer-events: none;
   padding: 7px 14px; border: 2px solid var(--cult); border-radius: 8px; background: rgba(11, 11, 18, 0.85);
@@ -441,4 +457,4 @@
 .cp-banner i { flex: none; width: 56px; height: 56px; border-radius: 50%; background: center / 130% no-repeat; }
 .cp-banner .inked { font-size: 34px; }
 .cp-banner small { display: block; margin-top: 4px; font: 500 14px/1.3 var(--font); color: var(--muted); }
-@media (max-height: 640px) { .cp-card { max-height: 200px; } .cp-hint { display: none; } }
+@media (max-height: 640px) { .cp-hint { font-size: 12px; } }

@@ -57,14 +57,17 @@ const mount: ControllerMount = (ctx) => {
     </section>
     <div class="cp-banner" hidden></div>
     <section class="cp-stage">
-      <div class="cp-card" aria-label="Hold to see your role">
+      <div class="cp-card" aria-label="Hold to see your role"><div class="cp-face cp-back"></div></div>
+      <p class="cp-hint">Hold the card to see your role</p>
+    </section>
+    <div class="cp-peek" aria-hidden="true">
+      <div class="cp-peek-card">
         <div class="cp-card-in">
           <div class="cp-face cp-back"></div>
           <div class="cp-face cp-front"><i class="cp-front-art"></i><div class="cp-front-text"></div></div>
         </div>
       </div>
-      <p class="cp-hint">Hold the card to see your role</p>
-    </section>
+    </div>
     <section class="cp-panel" data-scroll></section>`;
   ctx.root.appendChild(root);
   const $ = <T extends HTMLElement>(sel: string) => root.querySelector(sel) as T;
@@ -73,14 +76,27 @@ const mount: ControllerMount = (ctx) => {
 
   const offs: Array<() => void> = [];
   let panelOffs: Array<() => void> = [];
-  // hold to look; let go and it's face down again
+  // hold to look: a big copy of the card comes up in the middle of the screen and turns over (the small card in the
+  // layout can be tiny on a short phone); let go and it's face down again
+  const peek = (on: boolean) => {
+    card.classList.toggle("open", on);
+    root.classList.toggle("peeking", on);
+  };
   offs.push(
     button(card, {
       haptic: 12,
-      onPress: () => card.classList.add("open"),
-      onRelease: () => card.classList.remove("open"),
+      onPress: () => peek(true),
+      onRelease: () => peek(false),
     }),
   );
+  // a long press must never open the browser's own menu (copy image, share…)
+  const noMenu = (e: Event) => e.preventDefault();
+  card.addEventListener("contextmenu", noMenu);
+  offs.push(() => card.removeEventListener("contextmenu", noMenu));
+  // the page going to the background mid-hold (a call, the app switcher) never sends the release
+  const hide = () => document.visibilityState === "hidden" && peek(false);
+  document.addEventListener("visibilitychange", hide);
+  offs.push(() => document.removeEventListener("visibilitychange", hide));
 
   let scene: Scene | null = null;
   let selected: number | null = null;
