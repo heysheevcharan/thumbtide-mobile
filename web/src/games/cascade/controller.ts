@@ -1,219 +1,280 @@
-// The phone: a stick that steps your cursor one cell at a time (hold it to keep going), a big Place button,
-// and a status strip that says whose turn it is. The board is on the TV.
+// The phone: the whole board, the players along the top, and whose turn it is. On your turn, tap a cell (an empty
+// one or one of yours) to drop a piece there. Every move plays back on every phone, one wave of bursts at a time.
 import { haptic, type Controller } from "@thumbtide/sdk";
 import { button } from "@thumbtide/sdk/ui";
-import { gamepad } from "../kit/gamepad.ts";
 import { gameById } from "../registry.ts";
 import type { ControllerMount } from "../types.ts";
-import { colorVars } from "./hud.ts";
-import type { CascadeGame, CascadeShared } from "./shared.ts";
+import { capacity, type Move } from "./rules.ts";
+import { PLACE_MS, waveMs, type CascadeGame, type CascadeShared } from "./shared.ts";
 import "./cascade.css";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-const place = (k: number) => (k === 0 ? "1st" : k === 1 ? "2nd" : k === 2 ? "3rd" : `${k + 1}th`);
+const ordinal = (k: number) => (k === 0 ? "1st" : k === 1 ? "2nd" : k === 2 ? "3rd" : `${k + 1}th`);
+
+/** Where the pieces sit inside a cell, by how many there are (percent of the cell). */
+const DOTS: Record<number, [number, number][]> = {
+  1: [[50, 50]],
+  2: [[34, 50], [66, 50]],
+  3: [[50, 30], [32, 64], [68, 64]],
+  4: [[33, 33], [67, 33], [33, 67], [67, 67]],
+};
 
 const mount: ControllerMount = (ctx) => {
   const ctl = ctx.ctl as Controller<CascadeGame>;
-  const def = gameById("cascade")!;
-  const tune = def.controls?.tune ?? {};
-  const REPEAT_DELAY = tune["repeat-delay"] ?? 280;
-  const REPEAT_EVERY = tune["repeat-every"] ?? 120;
-  const STEP_BUZZ = tune["step-buzz"] ?? 6;
+  const pad = gameById("cascade")!.controls!;
+  const buzz = (name: string) => {
+    const p = pad.buzz[name];
+    if (p) haptic(p.length === 1 ? p[0]! : p);
+  };
 
-  const wrap = document.createElement("div");
-  wrap.className = "czc";
-  ctx.root.appendChild(wrap);
+  const root = document.createElement("div");
+  root.className = "czp";
+  root.innerHTML = `
+    <header class="czp-head"><ol class="czp-seats"></ol></header>
+    <div class="czp-status"><i class="czp-dot"></i><span class="czp-line"></span><b class="czp-time"></b></div>
+    <div class="czp-timer"><i></i></div>
+    <main class="czp-main"><div class="czp-board"></div></main>
+    <p class="czp-note"></p>
+    <div class="czp-end" hidden></div>`;
+  ctx.root.appendChild(root);
+  const $ = <T extends HTMLElement>(s: string) => root.querySelector(s) as T;
+  const main = $(".czp-main");
+  const boardEl = $(".czp-board");
+  const endEl = $(".czp-end");
+  const offs: Array<() => void> = [];
 
-  let held: { dx: number; dy: number } | null = null;
-  let repeat: ReturnType<typeof setTimeout> | null = null;
-  const myTurn = () => {
+  // ------------------------------------------------------------------ the board
+  let W = 0, H = 0;
+  let owner: number[] = [];
+  let count: number[] = [];
+  let cells: HTMLElement[] = [];
+  /** A move playing back: the board shown is ours, not the shared one, until it's done. */
+  let playing = false;
+  let shownMoves = -1;
+  let timers: ReturnType<typeof setTimeout>[] = [];
+
+  function build(w: number, h: number) {
+    W = w;
+    H = h;
+    boardEl.style.setProperty("--w", String(w));
+    boardEl.style.setProperty("--h", String(h));
+    boardEl.innerHTML = Array.from({ length: w * h }, (_, i) => `<button class="czp-cell" data-i="${i}" aria-label="Cell ${i + 1}"><span></span></button>`).join("");
+    cells = [...boardEl.children] as HTMLElement[];
+    fit();
+  }
+  /** The biggest board of square cells that fits the space. */
+  function fit() {
+    if (!W || !H) return;
+    const cw = main.clientWidth, ch = main.clientHeight;
+    if (!cw || !ch) return;
+    const cell = Math.floor(Math.min(cw / W, ch / H));
+    boardEl.style.width = `${cell * W}px`;
+    boardEl.style.height = `${cell * H}px`;
+    boardEl.style.setProperty("--cell", `${cell}px`);
+  }
+  const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(fit);
+  ro?.observe(main);
+
+  const colorOf = (o: number) => ctl.shared?.seats[o]?.color ?? "#888";
+  function paintCell(i: number) {
+    const el = cells[i];
+    if (!el) return;
+    const o = owner[i]!, n = count[i]!;
+    const cap = capacity(W, H, i);
+    const span = el.firstElementChild as HTMLElement;
+    el.style.setProperty("--c", o >= 0 ? colorOf(o) : "transparent");
+    el.classList.toggle("owned", o >= 0);
+    el.classList.toggle("ready", o >= 0 && n === cap - 1);
+    const dots = DOTS[Math.min(4, n)] ?? [];
+    span.innerHTML = dots.map(([x, y]) => `<i style="left:${x}%;top:${y}%"></i>`).join("") + (n > 4 ? `<b>${n}</b>` : "");
+  }
+  function paintAll() {
+    for (let i = 0; i < W * H; i++) paintCell(i);
+  }
+  function fromShared(s: CascadeShared) {
+    const b = s.board;
+    if (b.w !== W || b.h !== H || cells.length !== b.w * b.h) build(b.w, b.h);
+    owner = [...b.owner].map((c) => (c === "." ? -1 : Number(c)));
+    count = [...b.count].map(Number);
+    paintAll();
+  }
+
+  /** Play a move back: the piece lands, then each wave of bursts. */
+  function playMove(n: number, move: Move) {
     const s = ctl.shared;
-    const o = ctl.own;
-    return !!s && !!o && s.phase === "play" && s.turn === o.seat;
-  };
-  const step = () => {
-    if (!held || !myTurn()) return;
-    ctl.send({ type: "move", dx: held.dx, dy: held.dy });
-    if (STEP_BUZZ) haptic(STEP_BUZZ);
-  };
-  const stopRepeat = () => {
-    if (repeat) clearTimeout(repeat);
-    repeat = null;
-  };
-  const again = () => {
-    step();
-    repeat = setTimeout(again, REPEAT_EVERY);
-  };
+    if (!s) return;
+    stopPlayback();
+    if (s.board.w !== W) fromShared(s);
+    playing = true;
+    shownMoves = n;
+    const wm = waveMs(move.waves.length);
+    owner[move.cell] = move.player;
+    count[move.cell] = move.count;
+    paintCell(move.cell);
+    pulse(move.cell, "land");
+    move.waves.forEach((wave, k) => {
+      timers.push(
+        setTimeout(() => {
+          for (const b of wave.bursts) pulse(b.cell, "burst");
+          for (const c of wave.cells) {
+            owner[c.i] = c.owner;
+            count[c.i] = c.count;
+            paintCell(c.i);
+          }
+          if (k === 0 || k % 3 === 0) haptic(8);
+        }, PLACE_MS + k * wm),
+      );
+    });
+    timers.push(
+      setTimeout(() => {
+        playing = false;
+        render();
+      }, PLACE_MS + move.waves.length * wm + 120),
+    );
+  }
+  function pulse(i: number, kind: string) {
+    const el = cells[i];
+    if (!el) return;
+    el.classList.remove("land", "burst");
+    void el.offsetWidth;
+    el.classList.add(kind);
+  }
+  function stopPlayback() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    playing = false;
+  }
 
-  const pad = gamepad(wrap, def.controls!, {
-    ctl,
-    top: `
-      <div class="czc-top">
-        <div class="czc-me"><i class="czc-piece"></i><span>Your colour</span><span class="czc-wins"></span></div>
-        <div class="czc-status"><i class="czc-piece czc-who"></i><div><b class="czc-big"></b><small class="czc-small"></small></div></div>
-        <i class="czc-timer"><i></i></i>
-      </div>`,
-    onStick: ({ x, y }) => {
-      // the stick snaps to four directions; one push is one cell, holding it keeps stepping
-      const d = Math.hypot(x, y) < 0.5 ? null : Math.abs(x) > Math.abs(y) ? { dx: Math.sign(x), dy: 0 } : { dx: 0, dy: Math.sign(y) };
-      if (d?.dx === held?.dx && d?.dy === held?.dy) return;
-      stopRepeat();
-      held = d;
-      if (!d) return;
-      step();
-      repeat = setTimeout(again, REPEAT_DELAY);
-    },
-    onPress: (id) => {
-      if (id !== "place") return;
-      if (myTurn()) ctl.send({ type: "place" });
-      else pad.buzz("wait");
-    },
-  });
-
-  const over = document.createElement("div");
-  over.className = "czc-over";
-  over.setAttribute("data-scroll", "");
-  over.hidden = true;
-  wrap.appendChild(over);
-
-  const $ = <T extends HTMLElement>(s: string) => wrap.querySelector(s) as T;
-  const placeBtn = pad.btn("place")!;
-  const timerBar = $(".czc-timer");
-  const timerFill = timerBar.querySelector("i") as HTMLElement;
-
-  let overKey = "";
-  let lastTurn = -1;
-  let wasMine = false;
-  // the turn timer runs here from the moment the TV's word arrives
-  let deadline = 0;
-  let timerTotal = 0;
-  let raf = 0;
-
-  function setOver(key: string, html: string | null, cls = "") {
-    if (key === overKey) return;
-    overKey = key;
-    over.className = `czc-over ${cls}`;
-    over.hidden = html === null;
-    over.innerHTML = html ?? "";
-    for (const b of over.querySelectorAll<HTMLButtonElement>("[data-act]")) {
-      button(b, {
-        mode: "tap",
-        onPress: () => {
-          if (b.dataset.act === "again") ctl.send({ type: "again" });
-          else ctx.exitToLobby();
-        },
-      });
+  // a tap on the board
+  const onTap = (e: Event) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>(".czp-cell");
+    if (!el) return;
+    const s = ctl.shared, o = ctl.own;
+    const i = Number(el.dataset.i);
+    if (!s || !o || s.phase !== "play") return;
+    if (s.turn !== o.seat || playing) return buzz("wait");
+    if (owner[i] !== -1 && owner[i] !== o.seat) {
+      pulse(i, "nope");
+      return buzz("nope");
     }
-  }
+    haptic(pad.buttons[0]?.haptic ?? 22);
+    el.classList.add("picked");
+    ctl.send({ type: "place", cell: i });
+  };
+  boardEl.addEventListener("click", onTap);
+  offs.push(() => boardEl.removeEventListener("click", onTap));
 
-  function endHtml(s: CascadeShared, mine: number) {
-    const w = s.seats[s.winner];
-    const k = s.standings.indexOf(mine);
-    const vip = ctx.isVip();
-    const sh = ctx.shell();
-    const decider = sh?.players.find((p) => p.id === sh.vip)?.name;
-    const head = mine === s.winner ? "You win!" : w ? `${esc(w.name)} wins` : "Round over";
-    return `<div class="czc-end">
-      <section class="czc-end-me" style="${colorVars(w?.color ?? "#888888")}">
-        <i class="czc-piece big"></i>
-        <h2>${head}</h2>
-        ${mine !== s.winner && k >= 0 ? `<p>You finished ${place(k)}</p>` : `<p>Round ${s.round}</p>`}
-        ${
-          vip
-            ? `<div class="czc-actions"><button class="czc-btn primary" data-act="again">Play again</button><button class="czc-btn" data-act="lobby">Lobby</button></div>`
-            : `<p class="czc-wait"><b>${esc(decider ?? "The host")}</b> picks what's next</p>`
-        }
-      </section>
-      <ol class="czc-results">${s.standings
-        .map((i, n) => {
-          const x = s.seats[i]!;
-          return `<li class="${i === mine ? "me" : ""}" style="${colorVars(x.color)}"><span class="rk">${place(n)}</span><i class="czc-piece"></i><span class="nm">${esc(x.name)}</span><b>${x.wins ? `${x.wins} ${x.wins === 1 ? "win" : "wins"}` : ""}</b></li>`;
-        })
-        .join("")}</ol>
-    </div>`;
-  }
+  // ------------------------------------------------------------------ everything else
+  let seatsKey = "";
+  let endKey = "";
+  let endOffs: Array<() => void> = [];
+  let leftAt = 0;
+  let left = 0;
 
   function render() {
     const s = ctl.shared;
     const o = ctl.own;
-    const me = ctl.me;
-    if (!s || !o) {
-      if (me && s?.watching?.includes(me.id)) {
-        setOver("watch", `<h2>You're in next round</h2><p>This one's already going. Watch the board till it's over.</p>`);
-      } else setOver("wait", `<div class="spinner"></div>`);
-      return;
+    if (!s) return;
+    // the board: snap to the shared one unless a move is playing back (or we missed a move's message)
+    if (!playing) {
+      fromShared(s);
+      shownMoves = s.moves;
     }
-    wrap.setAttribute("style", colorVars(o.color));
-    const mySeat = s.seats[o.seat];
-    $(".czc-wins").textContent = mySeat?.wins ? `${mySeat.wins} ${mySeat.wins === 1 ? "win" : "wins"}` : "";
+    for (const el of cells) el.classList.remove("picked");
+    const me = o?.seat ?? -1;
+    root.style.setProperty("--me", me >= 0 ? s.seats[me]?.color ?? "#888" : "#888");
+    const myTurn = s.phase === "play" && s.turn === me && me >= 0;
+    root.classList.toggle("my-turn", myTurn);
 
-    if (s.phase === "end") {
-      setOver(`end:${s.round}:${ctx.isVip()}:${ctx.shell()?.vip}`, endHtml(s, o.seat), "czc-end-over");
-      return;
+    // the players
+    const sk = JSON.stringify([s.seats, s.active, me]);
+    if (sk !== seatsKey) {
+      seatsKey = sk;
+      $(".czp-seats").innerHTML = s.seats
+        .map(
+          (x, i) => `<li class="${i === s.active ? "on" : ""}${x.alive ? "" : " out"}${x.away ? " away" : ""}${i === me ? " me" : ""}" style="--c:${x.color}">
+            <i class="czp-piece"></i><span>${esc(i === me ? "You" : x.name)}</span><small>${x.alive ? x.pieces : "out"}${x.wins ? ` · ${"★".repeat(Math.min(3, x.wins))}` : ""}</small></li>`,
+        )
+        .join("");
     }
-    if (mySeat && !mySeat.alive) {
-      setOver("out", `<i class="czc-piece big"></i><h2>You're out</h2><p>Watch the rest play out on the TV.</p>`, "czc-out");
-      return;
-    }
-    setOver("play", null);
 
-    if (s.turn >= 0) lastTurn = s.turn;
-    const mine = s.turn === o.seat;
-    const who = s.seats[s.turn >= 0 ? s.turn : lastTurn];
-    wrap.classList.toggle("czc-mine", mine);
-    wrap.classList.toggle("czc-idle", !mine);
-    placeBtn.classList.toggle("off", !mine);
-    const whoEl = $(".czc-who");
-    if (mine) {
-      $(".czc-big").textContent = "Your turn";
-      whoEl.setAttribute("style", colorVars(o.color));
-    } else if (who) {
-      $(".czc-big").textContent = `${who.name}'s turn`;
-      whoEl.setAttribute("style", colorVars(who.color));
-    } else $(".czc-big").textContent = "Get ready";
-    const pieces = mySeat?.pieces ?? 0;
-    $(".czc-small").textContent = pieces ? `${pieces} ${pieces === 1 ? "piece" : "pieces"} on the board` : "";
-    if (mine && !wasMine) pad.buzz("turn");
-    wasMine = mine;
+    // whose turn
+    const who = s.seats[s.active];
+    $(".czp-dot").style.background = who?.color ?? "transparent";
+    $(".czp-line").innerHTML =
+      s.phase === "end" ? `<b>${esc(s.seats[s.winner]?.name ?? "")}</b> wins!`
+      : !who ? "Get ready…"
+      : myTurn ? "<b>Your turn</b> · tap a cell"
+      : s.active === me ? "Your move…"
+      : who.away ? `Waiting for <b>${esc(who.name)}</b> (away)`
+      : `<b>${esc(who.name)}</b>'s turn`;
+    left = s.timeLeft;
+    leftAt = performance.now();
+    $(".czp-note").textContent = o ? s.note : s.watching.length ? "You're watching: you're dealt in next round." : s.note;
 
-    if (mine && s.timeLeft) {
-      deadline = performance.now() + s.timeLeft;
-      timerTotal = s.timeTotal || s.timeLeft;
-    } else {
-      deadline = 0;
-      timerTotal = 0;
+    // the end of a round
+    endEl.hidden = s.phase !== "end";
+    const vip = ctx.isVip();
+    const ek = JSON.stringify([s.phase, s.standings, vip, s.round]);
+    if (ek !== endKey) {
+      endKey = ek;
+      endOffs.forEach((f) => f());
+      endOffs = [];
+      if (s.phase === "end") {
+        const sh = ctx.shell();
+        const decider = sh?.players.find((p) => p.id === sh.vip)?.name;
+        const won = s.winner === me;
+        endEl.innerHTML = `<div class="czp-card">
+          <h2>${won ? "You win!" : `${esc(s.seats[s.winner]?.name ?? "")} wins`}</h2>
+          <ol>${s.standings.map((i, k) => `<li style="--c:${s.seats[i]!.color}"><em>${ordinal(k)}</em><i class="czp-piece"></i><span>${esc(i === me ? "You" : s.seats[i]!.name)}</span><b>${"★".repeat(Math.min(5, s.seats[i]!.wins))}</b></li>`).join("")}</ol>
+          ${vip ? `<div class="czp-actions"><button class="czp-btn primary" data-act="again">Next round</button><button class="czp-btn" data-act="lobby">Back to lobby</button></div>` : `<p><b>${esc(decider ?? "The host")}</b> picks what's next.</p>`}
+        </div>`;
+        for (const b of endEl.querySelectorAll<HTMLElement>("[data-act]")) {
+          endOffs.push(button(b, { mode: "tap", haptic: 18, onPress: () => (b.dataset.act === "again" ? ctl.send({ type: "again" }) : ctx.exitToLobby()) }));
+        }
+      }
     }
-    timerBar.classList.toggle("run", !!deadline);
+    tick();
   }
 
-  // the timer bar, drawn locally
-  const tick = () => {
-    raf = requestAnimationFrame(tick);
-    if (!deadline || !timerTotal) return;
-    const left = Math.max(0, deadline - performance.now());
-    timerFill.style.transform = `scaleX(${left / timerTotal})`;
-    timerBar.classList.toggle("low", left < 3000);
-  };
-  raf = requestAnimationFrame(tick);
+  // the turn timer counts down between updates
+  function tick() {
+    const s = ctl.shared;
+    const live = !!s && s.timeTotal > 0 && s.turn >= 0 && s.phase === "play";
+    const ms = live ? Math.max(0, left - (performance.now() - leftAt)) : 0;
+    $(".czp-time").textContent = live ? String(Math.ceil(ms / 1000)) : "";
+    const bar = $(".czp-timer");
+    bar.hidden = !live;
+    if (live) (bar.firstElementChild as HTMLElement).style.transform = `scaleX(${(ms / s!.timeTotal).toFixed(3)})`;
+  }
+  const ticker = window.setInterval(tick, 200);
 
-  const offs = [
-    ctl.on("state", render),
-    ctx.onVip(() => {
-      overKey = "";
+  offs.push(
+    ctl.on("state", () => {
+      // a move we never saw played (we joined or reconnected mid-move): snap to the board
+      if (playing && ctl.shared && ctl.shared.moves !== shownMoves) stopPlayback();
       render();
     }),
-    ctl.on("message", (d) => {
-      if (d && typeof d === "object" && d.type === "buzz") pad.buzz(d.kind);
+    ctx.onVip(() => {
+      endKey = "";
+      render();
     }),
-  ];
+    ctl.on("message", (m) => {
+      if (!m || typeof m !== "object") return;
+      if (m.type === "move") playMove(m.n, m.move);
+      else if (m.type === "buzz") buzz(m.kind);
+    }),
+  );
   render();
+  requestAnimationFrame(fit);
 
   return () => {
-    stopRepeat();
-    cancelAnimationFrame(raf);
-    pad.destroy();
-    offs.forEach((o) => o());
-    wrap.remove();
+    stopPlayback();
+    window.clearInterval(ticker);
+    ro?.disconnect();
+    offs.forEach((f) => f());
+    endOffs.forEach((f) => f());
+    root.remove();
   };
 };
 

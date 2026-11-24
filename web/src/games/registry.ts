@@ -1,6 +1,7 @@
 import { parsePad } from "./kit/pad.ts";
 import { applyThumbs } from "./thumbs.ts";
 import type { GameDef } from "./types.ts";
+import cascadePad from "./cascade/cascade.pad?raw";
 import cultPad from "./cult/cult.pad?raw";
 import inklingPad from "./inkling/inkling.pad?raw";
 import oddwordPad from "./oddword/oddword.pad?raw";
@@ -37,6 +38,67 @@ export const GAMES: GameDef[] = applyThumbs([
     ],
     host: () => import("./cult/host.ts"),
     controller: () => import("./cult/controller.ts"),
+  },
+  {
+    id: "cascade",
+    title: "Cascade",
+    tagline: "Start a chain reaction. Take the whole board.",
+    minPlayers: 1,
+    maxPlayers: 8,
+    colors: ["#e23c5c", "#2c6cd8"],
+    cover: `${import.meta.env.BASE_URL}covers/cascade.webp`,
+    glyph: "pulse",
+    controls: parsePad(cascadePad, "cascade.pad"),
+    settings: [
+      {
+        key: "board",
+        label: "Board",
+        options: [
+          { value: "auto", label: "Auto" },
+          { value: "small", label: "5 × 7" },
+          { value: "medium", label: "6 × 9" },
+          { value: "large", label: "7 × 11" },
+          { value: "xl", label: "8 × 13" },
+          { value: "huge", label: "10 × 16" },
+          { value: "custom", label: "Custom" },
+        ],
+        default: "auto",
+      },
+      {
+        key: "cols",
+        label: "Columns",
+        options: [4, 5, 6, 7, 8, 9, 10, 12].map((n) => ({ value: n, label: String(n) })),
+        default: 7,
+        when: { key: "board", value: "custom" },
+      },
+      {
+        key: "rows",
+        label: "Rows",
+        options: [5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20].map((n) => ({ value: n, label: String(n) })),
+        default: 11,
+        when: { key: "board", value: "custom" },
+      },
+      {
+        key: "timer",
+        label: "Turn timer",
+        options: [
+          { value: 0, label: "Off" },
+          { value: 10, label: "10s" },
+          { value: 20, label: "20s" },
+          { value: 30, label: "30s" },
+        ],
+        default: 20,
+        applies: "now",
+      },
+      {
+        key: "bots",
+        label: "Computer players",
+        options: [0, 1, 2, 3, 4].map((n) => ({ value: n, label: n ? String(n) : "None" })),
+        default: 0,
+      },
+    ],
+    host: () => import("./cascade/host.ts"),
+    controller: () => import("./cascade/controller.ts"),
   },
   {
     id: "inkling",
