@@ -12,7 +12,7 @@ controllers.
 | Game | Players | Status |
 |---|---|---|
 | **Cult** | 1–8 (computers fill seats up to 5) | Live. Hidden roles: the town votes in leaders while a secret cult tries to take over |
-| Odd Word Out | 1–8 | Being ported |
+| **Odd Word Out** | 1–8 | Live. Everyone has the same secret word, almost. Describe it, then vote out the odd one |
 | Inkling | 1–8 | Being ported |
 | Cascade | 1–8 | Being ported |
 

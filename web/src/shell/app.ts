@@ -87,7 +87,12 @@ form.addEventListener("submit", (e) => {
 
 // Start a room: this phone becomes the room (it runs the game for everyone) and joins it as the first player.
 let engineStarted = false;
+/** This page is in a room (or on its way in): a second Start or Join is ignored. */
+let inRoom = false;
+let starting = false;
 async function host(name: string) {
+  if (inRoom || starting) return;
+  starting = true;
   form.hidden = true;
   showOverlay("Starting a room…");
   try {
@@ -96,8 +101,10 @@ async function host(name: string) {
       engineStarted = true;
       startEngine();
     }
+    starting = false;
     join(code, name);
   } catch (e) {
+    starting = false;
     showOverlay(null);
     form.hidden = false;
     errorEl.textContent = e instanceof Error ? e.message : "Couldn't start a room.";
@@ -133,6 +140,8 @@ function showOverlay(text: string | null) {
 }
 
 function join(room: string, name: string) {
+  if (inRoom) return;
+  inRoom = true;
   // put the keyboard away before the controller appears
   (document.activeElement as HTMLElement | null)?.blur?.();
   errorEl.textContent = "";
@@ -459,6 +468,7 @@ function join(room: string, name: string) {
   });
   ctl.on("closed", (reason) => {
     closed = true;
+    inRoom = false;
     unmount?.();
     unmount = null;
     releaseWake();

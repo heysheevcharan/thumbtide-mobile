@@ -36,14 +36,17 @@ const mount: ControllerMount = (ctx) => {
     <header class="op-head"><span class="op-me"></span><span class="op-name"></span><span class="op-chip"></span></header>
     <section class="op-table"><div class="op-seats"></div><p class="op-count"></p></section>
     <section class="op-stage">
-      <div class="op-card" aria-label="Hold to see your word">
+      <div class="op-card" aria-label="Hold to see your word"><div class="op-face op-back"><span>?</span></div></div>
+      <p class="op-hint">Hold the card to see your word</p>
+    </section>
+    <div class="op-peek" aria-hidden="true">
+      <div class="op-peek-card">
         <div class="op-card-in">
           <div class="op-face op-back"><span>?</span></div>
           <div class="op-face op-front"></div>
         </div>
       </div>
-      <p class="op-hint">Hold the card to see your word</p>
-    </section>
+    </div>
     <section class="op-panel" data-scroll></section>`;
   ctx.root.appendChild(root);
   const $ = <T extends HTMLElement>(sel: string) => root.querySelector(sel) as T;
@@ -52,13 +55,23 @@ const mount: ControllerMount = (ctx) => {
 
   const offs: Array<() => void> = [];
   let panelOffs: Array<() => void> = [];
+  // hold to look: a big copy comes up in the middle of the screen and turns over; let go and it's face down again
+  const peek = (on: boolean) => {
+    card.classList.toggle("open", on);
+    root.classList.toggle("peeking", on);
+  };
   offs.push(
     button(card, {
       haptic: feel("word"),
-      onPress: () => card.classList.add("open"),
-      onRelease: () => card.classList.remove("open"),
+      onPress: () => peek(true),
+      onRelease: () => peek(false),
     }),
   );
+  const noMenu = (e: Event) => e.preventDefault();
+  card.addEventListener("contextmenu", noMenu);
+  const hide = () => document.visibilityState === "hidden" && peek(false);
+  document.addEventListener("visibilitychange", hide);
+  offs.push(() => card.removeEventListener("contextmenu", noMenu), () => document.removeEventListener("visibilitychange", hide));
 
   let scene: Scene | null = null;
   let selected: number | null = null;
@@ -192,7 +205,7 @@ const mount: ControllerMount = (ctx) => {
     const key = `${o.round}:${o.playing}:${o.word}:${o.odd}:${s.mode}`;
     if (key === cardKey) return;
     cardKey = key;
-    card.classList.remove("open");
+    peek(false);
     const front = $(".op-front");
     if (!o.playing) front.innerHTML = `<small>Next round</small><p>You get a word when the next round starts.</p>`;
     else if (o.odd) front.innerHTML = `<small>No word for you</small><h3 class="odd">You're the odd one out</h3><p>Listen to the others and blend in.</p>`;

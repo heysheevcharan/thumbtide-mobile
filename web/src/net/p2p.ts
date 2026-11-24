@@ -194,7 +194,17 @@ export const isHosting = () => !!room && !room.closed;
  * Make this phone the room: register the room's address with the broker, then open the relay. Resolves with the
  * room code. After a reload the same code and seats come back (every phone reconnects with its token).
  */
+let hosting: Promise<string> | null = null;
 export function startHosting(): Promise<string> {
+  // one room per page, however many times this is called (a double tap, a resume racing a tap)
+  hosting ??= openRoom().catch((e) => {
+    hosting = null;
+    throw e;
+  });
+  return hosting;
+}
+
+function openRoom(): Promise<string> {
   let snap: RoomSnapshot | null = null;
   try {
     snap = JSON.parse(session.get(SNAPSHOT_KEY) ?? "null");

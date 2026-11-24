@@ -85,8 +85,6 @@ export const GAMES: GameDef[] = applyThumbs([
   },
   {
     id: "oddword",
-    // not ready on mobile yet: hidden from the library (?game= still opens it for testing)
-    hidden: true,
     title: "Odd Word Out",
     tagline: "Everyone has the same secret word. Almost everyone.",
     minPlayers: 1,

@@ -180,7 +180,8 @@
 .op-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
 .op-card { position: relative; flex: 0 1 auto; height: 100%; max-height: 380px; aspect-ratio: 3 / 4; perspective: 1200px; touch-action: none; }
 .op-card-in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 380ms cubic-bezier(0.2, 0.8, 0.2, 1); }
-.op-card.open .op-card-in { transform: rotateY(180deg); }
+.op-card { -webkit-touch-callout: none; cursor: pointer; transition: transform 150ms; }
+.op-card.open { transform: scale(0.94); }
 .op-face {
   position: absolute; inset: 0; box-sizing: border-box; border-radius: 20px; border: 4px solid var(--ink); overflow: hidden;
   -webkit-backface-visibility: hidden; backface-visibility: hidden; box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.45);
@@ -191,10 +192,10 @@
 }
 .op-back span { font: 400 120px/1 var(--display); color: var(--cream); text-shadow: 5px 5px 0 var(--ink), -3px -3px 0 var(--ink), 3px -3px 0 var(--ink), -3px 3px 0 var(--ink); }
 .op-front { transform: rotateY(180deg); background: var(--cream); gap: 10px; }
-.op-front small { font: 800 12px/1 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.65; }
-.op-front h3 { margin: 0; font: 400 42px/1.05 var(--display); word-break: break-word; }
-.op-front h3.odd { font-size: 32px; color: var(--reveal); }
-.op-front p { margin: 0; font: 500 14px/1.4 var(--sans); }
+.op-front small { font: 800 clamp(11px, 3.6cqw, 14px)/1 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.65; }
+.op-front h3 { margin: 0; font: 400 clamp(30px, 14cqw, 60px)/1.05 var(--display); word-break: break-word; }
+.op-front h3.odd { font-size: clamp(26px, 10cqw, 44px); color: var(--reveal); }
+.op-front p { margin: 0; font: 500 clamp(13px, 4.4cqw, 17px)/1.4 var(--sans); }
 .op-hint { margin: 0; font: 500 13px/1 var(--sans); opacity: 0.7; transition: opacity 200ms; }
 .op-card.open + .op-hint, .op:not(.has-word) .op-hint { opacity: 0; }
 .op:not(.has-word) .op-card { opacity: 0.4; }
@@ -231,3 +232,48 @@
 .op-row.on .op-radio { box-shadow: inset 0 0 0 7px var(--sun); }
 .op-panel.swap .op-row { animation: op-deal 340ms cubic-bezier(0.2, 1, 0.3, 1) backwards; }
 @keyframes op-deal { from { transform: translateY(14px); opacity: 0; } }
+
+/* ------------------------------------------------------------ mobile: big card while held */
+.op-peek {
+  position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; padding: 16px;
+  background: rgba(10, 6, 22, 0.78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 180ms, visibility 0s 180ms;
+}
+.op.peeking .op-peek { opacity: 1; visibility: visible; transition: opacity 180ms; }
+.op-peek-card {
+  position: relative; width: min(84vw, 360px, calc((100dvh - 64px) * 3 / 4)); aspect-ratio: 3 / 4;
+  perspective: 1400px; container-type: inline-size; transform: scale(0.9); transition: transform 300ms cubic-bezier(0.2, 1.2, 0.4, 1);
+}
+.op.peeking .op-peek-card { transform: none; }
+.op.peeking .op-card-in { transform: rotateY(180deg); }
+.op-peek .op-back span { font-size: 40cqw; }
+.op-card .op-back span { font-size: clamp(40px, 12vh, 120px); }
+
+/* ------------------------------------------------------------ mobile: the players row on every phone */
+.op { gap: 10px; max-width: 560px; margin: 0 auto; width: 100%; }
+.op-table { flex: none; display: flex; flex-direction: column; gap: 6px; }
+.op-seats { display: flex; gap: 6px; overflow-x: auto; padding: 14px 2px 2px; scrollbar-width: none; touch-action: pan-x; }
+.op-seats::-webkit-scrollbar { display: none; }
+.op-seat { position: relative; flex: none; width: 58px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; border-radius: 12px; }
+.op-seat.me { background: rgba(255, 244, 220, 0.1); }
+.op-seat.away { opacity: 0.5; }
+.op-mug { font-size: 34px; line-height: 0; height: 40px; display: flex; align-items: flex-end; }
+.op-seat b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 12px/1.1 var(--sans); }
+.op-num { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--sun); color: var(--ink); font: 800 12px/20px var(--sans); font-style: normal; text-align: center; border: 2px solid var(--ink); }
+.op-tag { font-style: normal; padding: 2px 6px; border-radius: 6px; background: rgba(255, 244, 220, 0.14); font: 800 9px/1.2 var(--sans); letter-spacing: 0.05em; text-transform: uppercase; }
+.op-tag.ok { background: #7cf29a; color: var(--ink); }
+.op-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; min-height: 9px; }
+.op-dots i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--ink); }
+.op-count { margin: 0; font: 600 13px/1 var(--sans); opacity: 0.8; text-align: center; }
+.op.tall .op-seats { padding-top: 12px; }
+
+/* the reveal, on the phone */
+.op-reveal { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.op-rcard { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; border-radius: 16px; background: var(--cream); color: var(--ink); border: 3px solid var(--ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4); text-align: center; animation: op-deal 400ms cubic-bezier(0.2, 1.3, 0.3, 1) backwards; }
+.op-rcard.odd { animation-delay: 250ms; }
+.op-rcard small { font: 800 10px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.65; }
+.op-rcard b { font: 400 26px/1.05 var(--display); word-break: break-word; }
+.op-rcard.odd b { font: 700 17px/1.1 var(--sans); }
+.op-rcard em { font: 500 13px/1.2 var(--sans); font-style: normal; opacity: 0.75; }
+.op-rcard .op-av { font-size: 34px; }
+.op.tall .op-panel { overflow-y: auto; }
