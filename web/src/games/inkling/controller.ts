@@ -156,6 +156,11 @@ const mount: ControllerMount = (ctx) => {
     bakeGrid(vgrid.getContext("2d")!, vgrid.width, vgrid.height);
     redrawView();
   }
+  // the space for the sheet changes as the screen does ("You got it" appears, the keyboard opens): fit it again
+  const viewObs = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => scene === "guess" && layoutView());
+  viewObs?.observe(viewBox);
+  const padObs = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => scene === "draw" && layoutSheet());
+  padObs?.observe(padBox);
   function redrawView() {
     vctx.clearRect(0, 0, vink.width, vink.height);
     for (const s of view) drawStroke(vctx, s, vink.width, vink.height);
@@ -576,8 +581,8 @@ const mount: ControllerMount = (ctx) => {
       } else if (m.type === "sheet") applySheet(m);
       else if (m.type === "feed") {
         // my own guesses are already on the list
-        if (m.name === ctl.own?.name && !m.right) return;
-        mine.push({ text: m.text, how: m.right ? "right" : "wrong", at: performance.now(), who: m.name === ctl.own?.name ? "You" : m.name, color: m.color });
+        if (m.name === ctl.own?.name) return;
+        mine.push({ text: m.text, how: m.right ? "right" : "wrong", at: performance.now(), who: m.name, color: m.color });
         if (mine.length > 60) mine.shift();
         drawSaid();
       } else if (m.type === "buzz") buzz(m.kind === "turn" ? "turn" : m.kind === "got" ? "drawn" : "end");
@@ -607,6 +612,8 @@ const mount: ControllerMount = (ctx) => {
     window.clearInterval(syncTimer);
     window.clearTimeout(clearArmed);
     window.removeEventListener("resize", onResize);
+    viewObs?.disconnect();
+    padObs?.disconnect();
     root.remove();
   };
 };

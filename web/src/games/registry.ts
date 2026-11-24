@@ -40,8 +40,6 @@ export const GAMES: GameDef[] = applyThumbs([
   },
   {
     id: "inkling",
-    // not ready on mobile yet: hidden from the library (?game= still opens it for testing)
-    hidden: true,
     title: "Inkling",
     tagline: "Draw the secret word on your phone. Everyone else guesses.",
     minPlayers: 1,

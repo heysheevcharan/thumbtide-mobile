@@ -271,3 +271,5 @@
 .ikp-scores li small { color: #7cf29a; font-weight: 800; }
 .ikp-scores li.away { opacity: 0.5; }
 .ikp-info { overflow-y: auto; justify-content: flex-start; padding-top: 28px; }
+.ikp-view { overflow: hidden; }
+.ikp-guess .ikp-gotcard { flex: none; }

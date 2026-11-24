@@ -260,8 +260,8 @@ const mount: HostMount = (ctx) => {
   let raf = 0;
   let lastLeft = -1;
   const frame = (now: number) => {
-    raf = requestAnimationFrame(frame);
-    const dt = Math.min(0.1, (now - last) / 1000);
+    // real time, even when the browser slows timers down (a background tab): catch up in whole steps
+    const dt = Math.min(2, (now - last) / 1000);
     last = now;
     if (!paused) {
       acc += dt;
@@ -297,11 +297,12 @@ const mount: HostMount = (ctx) => {
   }
   for (const p of host.players.values()) seat(p);
   restart();
-  raf = requestAnimationFrame(frame);
+  // a plain timer, not animation frames: nothing is drawn here, and frames stop when the page isn't on screen
+  raf = window.setInterval(() => frame(performance.now()), 33);
 
   return {
     dispose() {
-      cancelAnimationFrame(raf);
+      window.clearInterval(raf);
       offs.forEach((o) => o());
     },
     pause() {

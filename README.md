@@ -13,7 +13,7 @@ controllers.
 |---|---|---|
 | **Cult** | 1–8 (computers fill seats up to 5) | Live. Hidden roles: the town votes in leaders while a secret cult tries to take over |
 | **Odd Word Out** | 1–8 | Live. Everyone has the same secret word, almost. Describe it, then vote out the odd one |
-| Inkling | 1–8 | Being ported |
+| **Inkling** | 1–8 | Live. One player draws the secret word on their phone; it appears live on everyone else's while they guess |
 | Cascade | 1–8 | Being ported |
 
 Games are added one at a time. A game still being ported is hidden from the library (`/?game=<id>` on the room
