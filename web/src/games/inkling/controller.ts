@@ -38,8 +38,8 @@ const mount: ControllerMount = (ctx) => {
   root.innerHTML = `
     <header class="ikp-head"><i class="ikp-tip"></i><span class="ikp-status"></span><b class="ikp-time"></b></header>
     <div class="ikp-main">
-      <section class="ikp-scene ikp-info" data-scene="info"></section>
-      <section class="ikp-scene ikp-pick" data-scene="pick" hidden>
+      <section class="ikp-scene ikp-info" data-scene="info" data-scroll></section>
+      <section class="ikp-scene ikp-pick" data-scene="pick" data-scroll hidden>
         <h2>Pick a word to draw</h2>
         <p>Harder words score more for every right guess.</p>
         <div class="ikp-cards"></div>

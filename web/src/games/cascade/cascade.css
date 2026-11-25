@@ -82,3 +82,7 @@
 .czp-btn { height: 50px; border: 0; border-radius: 14px; font: 700 17px/1 Inter, system-ui, sans-serif; color: #eef0f6; background: rgba(255, 255, 255, 0.08); }
 .czp-btn.primary { background: #eef0f6; color: #0d0f17; }
 .czp-btn.pressed { transform: scale(0.97); }
+
+/* one scroller only: the players wrap instead of scrolling sideways */
+.czp-seats { flex-wrap: wrap; overflow: visible; touch-action: auto; justify-content: center; }
+.czp-seats li { min-width: 0; width: calc((100% - 3 * 6px) / 4); box-sizing: border-box; }

@@ -462,6 +462,10 @@ const mount: ControllerMount = (ctx) => {
       // Sheriff's same hand back)
       sentKey = "";
       root.classList.toggle("tall", !!next.tall);
+      // a screen where you have to act: the table folds down so the choice and its button always fit
+      root.classList.toggle("acting", /data-act=|data-pick=/.test(next.html));
+      // law cards on screen (discard, enact, peek): they need the room more than the small role card does
+      root.classList.toggle("laws", next.html.includes("cp-laws"));
       if (fresh) {
         panel.innerHTML = next.html;
         panel.classList.remove("swap");

@@ -458,3 +458,41 @@
 .cp-banner .inked { font-size: 34px; }
 .cp-banner small { display: block; margin-top: 4px; font: 500 14px/1.3 var(--font); color: var(--muted); }
 @media (max-height: 640px) { .cp-hint { font-size: 12px; } }
+
+/* ------------------------------------------------------------ mobile: everything fits, buttons always reachable
+   The screen is a column that never grows past the phone: header and table keep their size, the role card takes
+   what's left (and hides when there's no room), and the panel shrinks and scrolls inside itself. Its buttons are
+   pinned to the bottom of the panel, so Discard / Enact / Veto / Done are on screen whatever the hand. */
+.cp { overflow: hidden; }
+.cp-head, .cp-table { flex: none; }
+.cp-stage { flex: 1 1 0; min-height: 0; container-type: size; }
+@container (max-height: 120px) { .cp-card, .cp-hint { display: none; } }
+@container (max-height: 160px) { .cp-hint { display: none; } }
+.cp-panel { flex: 0 1 auto; min-height: 0; max-height: none; padding-bottom: 0; }
+.cp.tall .cp-panel { flex: 1 1 auto; }
+.cp-panel > :last-child:not(.cp-actions):not(.cp-vote) { margin-bottom: 16px; }
+.cp-actions, .cp-vote {
+  position: sticky; bottom: 0; z-index: 2; margin-left: -16px; margin-right: -16px; padding: 12px 16px 16px;
+  background: linear-gradient(180deg, rgba(21, 20, 28, 0), #15141c 14px);
+}
+.cp-vote + .cp-note { margin-bottom: 16px; }
+/* law cards never grow taller than a slice of the screen */
+.cp-laws { justify-items: center; }
+.cp-law { width: 100%; max-width: calc(min(26dvh, 230px) * 2 / 3); }
+/* acting on a short phone: fold the seats row (names are in the panel's own lists) */
+@media (max-height: 760px) { .cp.acting .cp-seats { display: none; } .cp.acting .cp-table { gap: 5px; padding: 8px 12px; } }
+@media (max-height: 600px) { .cp.acting .cp-meta { display: none; } }
+
+/* ------------------------------------------------------------ one scroller only
+   The panel is the only thing that scrolls (up and down). Lists and the end card inside it just grow, so a finger
+   never lands on a second scroller, and the seats row wraps instead of scrolling sideways (the page blocks drags
+   outside the panel, which fought a sideways scroll on iPhone). */
+.cp.tall .cp-list, .cp-end { flex: none; min-height: auto; overflow: visible; }
+.cp-seats { flex-wrap: wrap; overflow: visible; touch-action: auto; gap: 4px; }
+.cp-seats li { width: calc((100% - 4 * 4px) / 5); min-width: 0; padding: 4px 1px; }
+@media (min-width: 420px) { .cp-seats li { width: calc((100% - 7 * 4px) / 8); } }
+
+/* the role card never vanishes (hold it to read it big), except on law-card screens, which need the room */
+.cp-stage { min-height: 92px; }
+.cp.laws .cp-stage { min-height: 0; }
+@container (max-height: 120px) { .cp:not(.laws) .cp-card { display: block; } }
